@@ -1,0 +1,224 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\models\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\models\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\controllers\\homecontroller1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\controllers\\homecontroller1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\models\\cart.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\models\\cart.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\models\\tracking.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\models\\tracking.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\models\\product.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\models\\product.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\models\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\models\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\models\\cartitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\models\\cartitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\models\\bookingrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\models\\bookingrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|h:\\desarrollosoft\\tpi\\solutioncompras\\comprasapi\\models\\booking.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CAEF962A-9CFF-4CAC-9CBD-6B097E1C7940}|ComprasAPI\\ComprasAPI.csproj|solutionrelative:comprasapi\\models\\booking.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Class.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Class.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Models\\Class.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Class.cs",
+              "RelativeToolTip": "ComprasAPI\\Models\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T23:48:39.658Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "HomeController1.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Controllers\\HomeController1.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Controllers\\HomeController1.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Controllers\\HomeController1.cs",
+              "RelativeToolTip": "ComprasAPI\\Controllers\\HomeController1.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T23:35:53.435Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Program.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Program.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Program.cs",
+              "RelativeToolTip": "ComprasAPI\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAABNAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T23:28:20.14Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "HomeController.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Controllers\\HomeController.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Controllers\\HomeController.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Controllers\\HomeController.cs",
+              "RelativeToolTip": "ComprasAPI\\Controllers\\HomeController.cs",
+              "ViewState": "AgIAADQAAAAAAAAAAAAUwEcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T22:58:43.83Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Tracking.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Tracking.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Models\\Tracking.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Tracking.cs",
+              "RelativeToolTip": "ComprasAPI\\Models\\Tracking.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T22:47:42.301Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "Booking.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Booking.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Models\\Booking.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Booking.cs",
+              "RelativeToolTip": "ComprasAPI\\Models\\Booking.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T22:35:46.459Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "BookingRequest.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\BookingRequest.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Models\\BookingRequest.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\BookingRequest.cs",
+              "RelativeToolTip": "ComprasAPI\\Models\\BookingRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T22:32:40.127Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Order.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Order.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Models\\Order.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Order.cs",
+              "RelativeToolTip": "ComprasAPI\\Models\\Order.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T22:25:32.398Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Cart.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Cart.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Models\\Cart.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Cart.cs",
+              "RelativeToolTip": "ComprasAPI\\Models\\Cart.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T22:15:58.65Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "CartItem.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\CartItem.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Models\\CartItem.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\CartItem.cs",
+              "RelativeToolTip": "ComprasAPI\\Models\\CartItem.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T22:05:46.245Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Product.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Product.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Models\\Product.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\Product.cs",
+              "RelativeToolTip": "ComprasAPI\\Models\\Product.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T22:02:44.026Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "User.cs",
+              "DocumentMoniker": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\User.cs",
+              "RelativeDocumentMoniker": "ComprasAPI\\Models\\User.cs",
+              "ToolTip": "H:\\DesarrolloSoft\\TPI\\SolutionCompras\\ComprasAPI\\Models\\User.cs",
+              "RelativeToolTip": "ComprasAPI\\Models\\User.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-28T21:54:42.134Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
