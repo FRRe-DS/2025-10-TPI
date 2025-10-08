@@ -8,7 +8,7 @@ namespace ComprasAPI.Controllers
     public class RegisterController : ControllerBase
     {
         [HttpPost]
-        public IActionResult Register([FromBody] User model)
+        public IActionResult Register([FromBody] RegisterRequest model)
         {
             // Validar que todos los campos estén presentes
             if (string.IsNullOrWhiteSpace(model.Nombre) ||

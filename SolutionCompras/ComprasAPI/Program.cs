@@ -1,6 +1,8 @@
-using ComprasAPI.Models;
 using ComprasAPI.Controllers;
+using ComprasAPI.Data;
+using ComprasAPI.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -34,6 +36,11 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddControllers();
 
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
+    new MySqlServerVersion(new Version(8, 0, 36))));
+
+
 var app = builder.Build();
 
 app.UseHttpsRedirection();
@@ -43,7 +50,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // ===== Usuario de prueba =====
-LoginController.AddTestUser(new User
+LoginController.AddTestUser(new RegisterRequest
 {
     Nombre = "Juan",
     Apellido = "Pérez",

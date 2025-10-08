@@ -10,5 +10,8 @@
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
+        //Propiedad de navegación inversa
+        public User User { get; set; }
+
     }
 }

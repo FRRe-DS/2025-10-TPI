@@ -5,15 +5,10 @@ namespace ComprasAPI.Models
 {
     public class Cart
     {
-        public List<CartItem> Items { get; set; } = new List<CartItem>();
+        public int Id { get; set; }
+        public ICollection<CartItem> Items { get; set; } = new List<CartItem>();
+        public decimal Total { get; set; }
 
-        // Propiedad calculada para el total
-        public decimal Total
-        {
-            get
-            {
-                return Items.Sum(item => (item.Producto?.Precio ?? 0) * item.Quantity);
-            }
-        }
+        public int UserId { get; set; }  // quién es dueño del carrito
     }
 }

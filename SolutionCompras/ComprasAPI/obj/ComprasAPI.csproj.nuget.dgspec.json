@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "H:\\DesarrolloSoft\\TPI-GIT\\SolutionCompras\\ComprasAPI\\ComprasAPI.csproj": {}
+    "C:\\Users\\alejo\\source\\repos\\2025-10-TPI\\SolutionCompras\\ComprasAPI\\ComprasAPI.csproj": {}
   },
   "projects": {
-    "H:\\DesarrolloSoft\\TPI-GIT\\SolutionCompras\\ComprasAPI\\ComprasAPI.csproj": {
+    "C:\\Users\\alejo\\source\\repos\\2025-10-TPI\\SolutionCompras\\ComprasAPI\\ComprasAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "H:\\DesarrolloSoft\\TPI-GIT\\SolutionCompras\\ComprasAPI\\ComprasAPI.csproj",
+        "projectUniqueName": "C:\\Users\\alejo\\source\\repos\\2025-10-TPI\\SolutionCompras\\ComprasAPI\\ComprasAPI.csproj",
         "projectName": "ComprasAPI",
-        "projectPath": "H:\\DesarrolloSoft\\TPI-GIT\\SolutionCompras\\ComprasAPI\\ComprasAPI.csproj",
-        "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
-        "outputPath": "H:\\DesarrolloSoft\\TPI-GIT\\SolutionCompras\\ComprasAPI\\obj\\",
+        "projectPath": "C:\\Users\\alejo\\source\\repos\\2025-10-TPI\\SolutionCompras\\ComprasAPI\\ComprasAPI.csproj",
+        "packagesPath": "C:\\Users\\alejo\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\alejo\\source\\repos\\2025-10-TPI\\SolutionCompras\\ComprasAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\alejo\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -58,6 +58,24 @@
               "target": "Package",
               "version": "[9.0.8, )"
             },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.9, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.9, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
+              "target": "Package",
+              "version": "[9.0.9, )"
+            },
+            "Pomelo.EntityFrameworkCore.MySql": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
             "System.IdentityModel.Tokens.Jwt": {
               "target": "Package",
               "version": "[8.14.0, )"
@@ -82,7 +100,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

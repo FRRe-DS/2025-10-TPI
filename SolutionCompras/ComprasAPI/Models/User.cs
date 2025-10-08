@@ -2,11 +2,14 @@
 {
     public class User
     {
-        public string Nombre { get; set; }
-        public string Apellido { get; set; }
+        public int Id { get; set; }                     // Primary Key (PK)
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-
+        //Relación 1:1 con UserProfile
+        public UserProfile UserProfile { get; set; }
     }
 }

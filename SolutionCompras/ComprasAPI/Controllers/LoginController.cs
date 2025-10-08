@@ -14,7 +14,7 @@ namespace ComprasAPI.Controllers
         private readonly IConfiguration _configuration;
 
         // Lista de usuarios en memoria compartida
-        public static List<User> Users = new List<User>();
+        public static List<RegisterRequest> Users = new List<RegisterRequest>();
 
         public LoginController(IConfiguration configuration)
         {
@@ -40,7 +40,7 @@ namespace ComprasAPI.Controllers
             });
         }
 
-        private string GenerateJwtToken(User user)
+        private string GenerateJwtToken(RegisterRequest user)
         {
             var claims = new[]
             {
@@ -63,7 +63,7 @@ namespace ComprasAPI.Controllers
         }
 
         // Método opcional para agregar usuarios de prueba
-        public static void AddTestUser(User user)
+        public static void AddTestUser(RegisterRequest user)
         {
             Users.Add(user);
         }
