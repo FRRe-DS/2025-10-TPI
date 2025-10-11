@@ -50,14 +50,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 
-// ===== Usuario de prueba =====
-LoginController.AddTestUser(new RegisterRequest
-{
-    FirstName = "Juan",           
-    LastName = "Pérez",            
-    Email = "juan@mail.com",
-    Password = "123456",
-    RepeatPassword = "123456"       
-});
-
 app.Run();

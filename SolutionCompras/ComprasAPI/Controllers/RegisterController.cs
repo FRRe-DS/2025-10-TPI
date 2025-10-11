@@ -1,5 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ComprasAPI.Data;
 using ComprasAPI.Models;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ComprasAPI.Controllers
 {
@@ -7,94 +11,42 @@ namespace ComprasAPI.Controllers
     [Route("api/auth/register")]
     public class RegisterController : ControllerBase
     {
-        [HttpPost]
-        public IActionResult Register([FromBody] RegisterRequest model)
+        private readonly ApplicationDbContext _context;
+
+        public RegisterController(ApplicationDbContext context)
         {
-            try
-            {
-                // Validar que todos los campos estén presentes
-                if (string.IsNullOrWhiteSpace(model.FirstName) ||
-                    string.IsNullOrWhiteSpace(model.LastName) ||
-                    string.IsNullOrWhiteSpace(model.Email) ||
-                    string.IsNullOrWhiteSpace(model.Password) ||
-                    string.IsNullOrWhiteSpace(model.RepeatPassword))
-                {
-                    return BadRequest(new
-                    {
-                        error = "Todos los campos son obligatorios",
-                        code = "MISSING_FIELDS"
-                    });
-                }
-
-                // Validar formato de email
-                if (!IsValidEmail(model.Email))
-                {
-                    return BadRequest(new
-                    {
-                        error = "El formato del email es inválido",
-                        code = "INVALID_EMAIL"
-                    });
-                }
-
-                // Validar que las contraseñas coincidan
-                if (model.Password != model.RepeatPassword)
-                {
-                    return BadRequest(new
-                    {
-                        error = "Las contraseñas no coinciden",
-                        code = "PASSWORD_MISMATCH"
-                    });
-                }
-
-                // Validar fortaleza de contraseña (opcional)
-                if (model.Password.Length < 6)
-                {
-                    return BadRequest(new
-                    {
-                        error = "La contraseña debe tener al menos 6 caracteres",
-                        code = "WEAK_PASSWORD"
-                    });
-                }
-
-                // Verificar si el email ya está registrado
-                if (LoginController.Users.Any(u => u.Email.ToLower() == model.Email.ToLower()))
-                {
-                    return Conflict(new
-                    {
-                        error = "El email ya está registrado",
-                        code = "EMAIL_ALREADY_EXISTS"
-                    });
-                }
-
-                // Agregar usuario a la lista estática de LoginController
-                LoginController.Users.Add(model);
-
-                return StatusCode(201, new
-                {
-                    message = "Usuario registrado exitosamente"
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    error = "Error interno del servidor",
-                    code = "INTERNAL_ERROR"
-                });
-            }
+            _context = context;
         }
 
-        private bool IsValidEmail(string email)
+        [HttpPost]
+        public async Task<IActionResult> Register(RegisterRequest request)
         {
-            try
+            if (request.Password != request.RepeatPassword)
+                return BadRequest("Las contraseñas no coinciden.");
+
+            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+                return BadRequest("El correo ya está registrado.");
+
+            var user = new User
             {
-                var addr = new System.Net.Mail.MailAddress(email);
-                return addr.Address == email;
-            }
-            catch
-            {
-                return false;
-            }
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                PasswordHash = HashPassword(request.Password),
+                CreatedAt = DateTime.Now
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return Ok("Usuario registrado correctamente.");
+        }
+
+        private string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(bytes);
         }
     }
 }

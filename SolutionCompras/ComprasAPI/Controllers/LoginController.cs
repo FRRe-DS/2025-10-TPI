@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+using Microsoft.EntityFrameworkCore;
+using ComprasAPI.Data;
 using ComprasAPI.Models;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ComprasAPI.Controllers
 {
@@ -11,112 +11,31 @@ namespace ComprasAPI.Controllers
     [Route("api/auth/login")]
     public class LoginController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _context;
 
-        // Lista de usuarios en memoria compartida
-        public static List<RegisterRequest> Users = new List<RegisterRequest>();
-
-        public LoginController(IConfiguration configuration)
+        public LoginController(ApplicationDbContext context)
         {
-            _configuration = configuration;
+            _context = context;
         }
 
         [HttpPost]
-        public IActionResult Login([FromBody] LoginRequest model)
+        public async Task<IActionResult> Login(LoginRequest request)
         {
-            try
-            {
-                // Validar campos obligatorios
-                if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
-                {
-                    return BadRequest(new
-                    {
-                        error = "Email y Password son obligatorios",
-                        code = "MISSING_FIELDS"
-                    });
-                }
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null)
+                return Unauthorized("Usuario no encontrado.");
 
-                // Buscar usuario por email y contraseña
-                var user = Users.FirstOrDefault(u => u.Email == model.Email && u.Password == model.Password);
-                if (user == null)
-                {
-                    return Unauthorized(new
-                    {
-                        error = "Email o contraseña incorrectos",
-                        code = "INVALID_CREDENTIALS"
-                    });
-                }
+            if (user.PasswordHash != HashPassword(request.Password))
+                return Unauthorized("Contraseña incorrecta.");
 
-                var token = GenerateJwtToken(user);
-
-                // 🔥 CORRECCIÓN: Usar FirstName y LastName en lugar de Nombre y Apellido
-                return Ok(new
-                {
-                    token,
-                    user = new
-                    {
-                        firstName = user.FirstName,
-                        lastName = user.LastName,
-                        email = user.Email
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    error = "Error interno del servidor",
-                    code = "INTERNAL_ERROR"
-                });
-            }
+            return Ok("Inicio de sesión exitoso.");
         }
 
-        private string GenerateJwtToken(RegisterRequest user)
+        private string HashPassword(string password)
         {
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name, user.Email),
-                new Claim(ClaimTypes.NameIdentifier, user.Email),
-                // 🔥 CORRECCIÓN: Agregar claims con FirstName y LastName
-                new Claim("firstName", user.FirstName),
-                new Claim("lastName", user.LastName)
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(2),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        // Método opcional para agregar usuarios de prueba
-        public static void AddTestUser(RegisterRequest user)
-        {
-            Users.Add(user);
-        }
-
-        // Método para debug: ver usuarios registrados
-        [HttpGet("debug/users")]
-        public IActionResult GetUsers()
-        {
-            var users = Users.Select(u => new {
-                u.FirstName,
-                u.LastName,
-                u.Email
-            }).ToList();
-
-            return Ok(new
-            {
-                totalUsers = Users.Count,
-                users
-            });
+            using var sha256 = SHA256.Create();
+            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(bytes);
         }
     }
 }
