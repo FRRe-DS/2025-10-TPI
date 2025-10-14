@@ -53,16 +53,31 @@ builder.Services.AddCors(options =>
         });
 });
 
+// ----------------------
+// [Swagger] Servicios
+// ----------------------
+builder.Services.AddEndpointsApiExplorer();   // [Swagger] Explora endpoints para generar la doc
+builder.Services.AddSwaggerGen();             // [Swagger] Generador de OpenAPI/Swagger
 
 var app = builder.Build();
 
 app.UseCors("AllowAngular");
+
+// ----------------------
+// [Swagger] Middleware
+//     Podés dejarlo siempre activo o solo en Development (descomentar el if si preferís).
+// ----------------------
+
+// if (app.Environment.IsDevelopment())
+// {
+app.UseSwagger();                             // [Swagger] Publica /swagger/v1/swagger.json
+app.UseSwaggerUI();                           // [Swagger] UI en /swagger
+// }
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 
 app.Run();
