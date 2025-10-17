@@ -14,25 +14,83 @@ builder.Configuration["Jwt:Issuer"] = "ComprasAPI";
 builder.Configuration["Jwt:Audience"] = "ComprasUsuarios";
 
 // Agregar servicios de autenticación JWT
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+//builder.Services.AddAuthentication(options =>
+//{
+//    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+//})
+//.AddJwtBearer(options =>
+//{
+//   options.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        ValidateIssuer = true,
+//        ValidateAudience = true,
+//ValidateLifetime = true,
+//ValidateIssuerSigningKey = true,
+//ValidIssuer = builder.Configuration["Jwt:Issuer"],
+//ValidAudience = builder.Configuration["Jwt:Audience"],
+//IssuerSigningKey = new SymmetricSecurityKey(
+//Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+//    };
+//});
+
+//AÑADIR JWT CON KEYCLOACK
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-    };
-});
+        //configure keycloak settings
+        var configuration = builder.Configuration;
+
+        var authority = configuration["Keycloak:Authority"];
+        var audience = configuration["Keycloak:Audience"];
+        var metadataAddress = configuration["Keycloak:MetadataAddress"];
+        var requireHttpsMetadata = configuration.GetValue<bool>("Keycloak:RequireHttpsMetadata");
+
+        options.Authority = authority;
+        //options.Audience = audience;
+        options.MetadataAddress = metadataAddress;
+        options.RequireHttpsMetadata = requireHttpsMetadata;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            //ValidAudience = audience,
+            ValidIssuer = authority,
+            ClockSkew = TimeSpan.FromHours(3)
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = e =>
+            {
+                return Task.CompletedTask;
+
+            },
+            OnTokenValidated = e =>
+            {
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = e =>
+            {
+                return Task.CompletedTask;
+            },
+            OnChallenge = e =>
+            {
+                return Task.CompletedTask;
+            }
+        };
+
+
+
+
+    });
+
+
 
 builder.Services.AddControllers();
 
