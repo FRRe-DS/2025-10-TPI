@@ -1,18 +1,14 @@
 import { Routes } from '@angular/router';
+import { ProductsComponent } from './components/products/products';
+import { KeycloakCallbackComponent } from './components/keycloak-callback/keycloak-callback';
+import { LogoutComponent } from './components/logout/logout';
+import { LoginComponent } from './components/login/login';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { 
-    path: 'login', 
-    loadComponent: () => import('./components/auth/login/login').then(m => m.LoginComponent)
-  },
-  { 
-    path: 'register', 
-    loadComponent: () => import('./components/auth/register/register').then(m => m.RegisterComponent)
-  },
-  { 
-    path: 'dashboard', 
-    loadComponent: () => import('./components/dashboard/dashboard').then(m => m.DashboardComponent)
-  },
-  { path: '**', redirectTo: 'login' }
+  { path: '', component: LoginComponent }, // ← Página de login por defecto
+  { path: 'login', component: LoginComponent },
+  { path: 'compras', component: ProductsComponent },
+  { path: 'keycloak-callback', component: KeycloakCallbackComponent },
+  { path: 'logout', component: LogoutComponent },
+  { path: '**', redirectTo: '/compras' }
 ];

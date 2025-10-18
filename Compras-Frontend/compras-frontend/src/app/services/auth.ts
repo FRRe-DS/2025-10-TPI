@@ -1,59 +1,67 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  repeatPassword: string;
-  firstName: string;
-  lastName: string;
-}
+import { Injectable, inject } from '@angular/core';
+import { KeycloakService } from 'keycloak-angular';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  
-  private apiUrl = 'https://localhost:7248/api';
+  private keycloakService = inject(KeycloakService);
 
-  constructor(private http: HttpClient) { }
-
-  login(credentials: LoginRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/login`, credentials, { 
-      responseType: 'text'
-    }).pipe(
-      tap((response: string) => {
-        if (response.includes('exitoso')) {
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userEmail', credentials.email);
-        }
-      })
-    );
+  async isLoggedIn(): Promise<boolean> {
+    try {
+      return await this.keycloakService.isLoggedIn();
+    } catch (error: any) {
+      console.warn('⚠️ Error verificando login:', error);
+      return false;
+    }
   }
 
-  register(userData: RegisterRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/register`, userData, {
-      responseType: 'text'
-    });
+  login(): void {
+    console.log('🔑 Redirigiendo a Keycloak...');
+    
+    // Login MANUAL simple - Keycloak redirigirá automáticamente al callback
+    const redirectUri = encodeURIComponent('http://localhost:4200/keycloak-callback');
+    const loginUrl = `http://localhost:8080/realms/ds-2025-realm/protocol/openid-connect/auth?client_id=grupo-10&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
+    
+    console.log('📍 URL de login:', loginUrl);
+    window.location.href = loginUrl;
   }
 
-  logout(): void {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userEmail');
+  async logout(): Promise<void> {
+    try {
+      await this.keycloakService.logout();
+    } catch (error: any) {
+      console.error('❌ Error en logout:', error);
+      // Fallback manual
+      window.location.href = 'http://localhost:8080/realms/ds-2025-realm/protocol/openid-connect/logout';
+    }
   }
 
-  isLoggedIn(): boolean {
-    return localStorage.getItem('isLoggedIn') === 'true';
+  async getToken(): Promise<string> {
+    try {
+      return await this.keycloakService.getToken();
+    } catch (error: any) {
+      console.warn('⚠️ Error obteniendo token:', error);
+      return '';
+    }
   }
 
-  getCurrentUserEmail(): string | null {
-    return localStorage.getItem('userEmail');
+  getUserName(): string {
+    try {
+      return this.keycloakService.getUsername();
+    } catch (error: any) {
+      console.warn('⚠️ Error obteniendo username:', error);
+      return '';
+    }
+  }
+
+  getEmail(): string {
+    try {
+      const user = this.keycloakService.getKeycloakInstance().idTokenParsed;
+      return user?.['email'] || '';
+    } catch (error: any) {
+      console.warn('⚠️ Error obteniendo email:', error);
+      return '';
+    }
   }
 }

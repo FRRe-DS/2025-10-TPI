@@ -1,30 +1,44 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import { RouterModule, RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { AuthService } from './services/auth';
+import { ApiService } from './services/api';
+import { HeaderComponent } from './components/header/header';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink],
+  imports: [
+    CommonModule, 
+    RouterModule, 
+    RouterOutlet, 
+    HeaderComponent
+  ],
   template: `
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-      <div class="container">
-        <a class="navbar-brand" routerLink="/dashboard">Compras App</a>
-        <div class="navbar-nav ms-auto">
-          <a class="nav-link" routerLink="/login">Login</a>
-          <a class="nav-link" routerLink="/register">Register</a>
-        </div>
-      </div>
-    </nav>
+    <!-- SIEMPRE mostrar el header -->
+    <app-header></app-header>
     
-    <main>
+    <!-- Contenido principal -->
+    <main class="container-fluid">
       <router-outlet></router-outlet>
     </main>
-  `,
-  styles: [`
-    main { min-height: calc(100vh - 56px); }
-  `]
+  `
 })
-export class AppComponent {
-  title = 'compras-frontend';
+export class AppComponent implements OnInit {
+  private authService = inject(AuthService);
+  private apiService = inject(ApiService);
+  private router = inject(Router);
+
+  ngOnInit() {
+    console.log('🚀 AppComponent iniciado');
+    
+    // Solo verificar autenticación en cambios de ruta, no forzar redirección
+    this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        console.log('📍 Cambio de ruta:', event.url);
+        // No forzar redirección automática aquí
+      });
+  }
 }
