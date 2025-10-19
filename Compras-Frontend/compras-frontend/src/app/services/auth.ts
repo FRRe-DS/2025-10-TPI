@@ -1,3 +1,4 @@
+/*
 import { Injectable, inject } from '@angular/core';
 import { KeycloakService } from 'keycloak-angular';
 
@@ -63,5 +64,54 @@ export class AuthService {
       console.warn('⚠️ Error obteniendo email:', error);
       return '';
     }
+  }
+}
+*/
+
+// src/app/services/auth.ts
+import { Injectable, inject } from '@angular/core';
+import { ManualAuthService } from './manual-auth.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthService {
+  private manualAuthService = inject(ManualAuthService);
+
+  async isLoggedIn(): Promise<boolean> {
+    return this.manualAuthService.isLoggedIn();
+  }
+
+  login(): void {
+    console.log('🔑 Redirigiendo a Keycloak...');
+    
+    const redirectUri = encodeURIComponent('http://localhost:4200/keycloak-callback');
+    const loginUrl = `http://localhost:8080/realms/ds-2025-realm/protocol/openid-connect/auth?client_id=grupo-10&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
+    
+    window.location.href = loginUrl;
+  }
+
+  async logout(): Promise<void> {
+    this.manualAuthService.logout();
+  }
+
+  async getToken(): Promise<string> {
+    return this.manualAuthService.getToken();
+  }
+
+  getUserName(): string {
+    // Por ahora devolver un valor fijo, luego podemos extraer del token
+    return 'Usuario';
+  }
+
+  getEmail(): string {
+    // Por ahora vacío, luego podemos extraer del token
+    return '';
+  }
+
+  async debugAuthStatus(): Promise<string> {
+    const isLoggedIn = this.manualAuthService.isLoggedIn();
+    const token = this.manualAuthService.getToken();
+    return `LoggedIn: ${isLoggedIn} | Token: ${token ? '✅' : '❌'}`;
   }
 }

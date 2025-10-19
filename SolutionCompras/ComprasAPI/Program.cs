@@ -1,96 +1,52 @@
-using ComprasAPI.Controllers;
+/*
 using ComprasAPI.Data;
-using ComprasAPI.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuración JWT en appsettings.json
-builder.Configuration["Jwt:Key"] = "MI_CLAVE_SECRETA_DE_EXACTAMENTE_32_!!AAAA";
-builder.Configuration["Jwt:Issuer"] = "ComprasAPI";
-builder.Configuration["Jwt:Audience"] = "ComprasUsuarios";
-
-// Agregar servicios de autenticación JWT
-//builder.Services.AddAuthentication(options =>
-//{
-//    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-//    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-//})
-//.AddJwtBearer(options =>
-//{
-//   options.TokenValidationParameters = new TokenValidationParameters
-//    {
-//        ValidateIssuer = true,
-//        ValidateAudience = true,
-//ValidateLifetime = true,
-//ValidateIssuerSigningKey = true,
-//ValidIssuer = builder.Configuration["Jwt:Issuer"],
-//ValidAudience = builder.Configuration["Jwt:Audience"],
-//IssuerSigningKey = new SymmetricSecurityKey(
-//Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-//    };
-//});
-
-//AÑADIR JWT CON KEYCLOACK
-
+// Configuracion JWT con Keycloak
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        //configure keycloak settings
-        var configuration = builder.Configuration;
-
-        var authority = configuration["Keycloak:Authority"];
-        var audience = configuration["Keycloak:Audience"];
-        var metadataAddress = configuration["Keycloak:MetadataAddress"];
-        var requireHttpsMetadata = configuration.GetValue<bool>("Keycloak:RequireHttpsMetadata");
-
-        options.Authority = authority;
-        //options.Audience = audience;
-        options.MetadataAddress = metadataAddress;
-        options.RequireHttpsMetadata = requireHttpsMetadata;
+        // Configuracion de Keycloak
+        options.Authority = "http://localhost:8080/realms/ds-2025-realm";
+        options.Audience = "grupo-10";
+        options.RequireHttpsMetadata = false;
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidateAudience = false,
+            ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            //ValidAudience = audience,
-            ValidIssuer = authority,
-            ClockSkew = TimeSpan.FromHours(3)
+            ValidAudience = "grupo-10",
+            ValidIssuer = "http://localhost:8080/realms/ds-2025-realm",
+            ClockSkew = TimeSpan.FromSeconds(30)
         };
 
+        // Eventos para debug
         options.Events = new JwtBearerEvents
         {
-            OnMessageReceived = e =>
+            OnAuthenticationFailed = context =>
             {
-                return Task.CompletedTask;
-
-            },
-            OnTokenValidated = e =>
-            {
+                Console.WriteLine("JWT Authentication Failed: " + context.Exception.Message);
                 return Task.CompletedTask;
             },
-            OnAuthenticationFailed = e =>
+            OnTokenValidated = context =>
             {
+                Console.WriteLine("JWT Token Validated for user: " + context.Principal.Identity.Name);
                 return Task.CompletedTask;
             },
-            OnChallenge = e =>
+            OnChallenge = context =>
             {
+                Console.WriteLine("JWT Challenge: " + context.Error);
                 return Task.CompletedTask;
             }
         };
-
-
-
-
     });
-
-
 
 builder.Services.AddControllers();
 
@@ -98,40 +54,89 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
     new MySqlServerVersion(new Version(8, 0, 36))));
 
-// Agregar CORS al inicio, después de builder.Services
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular",
         policy =>
         {
-            policy.WithOrigins("https://localhost:4200", "http://localhost:4200") // URL de tu Angular
+            policy.WithOrigins("https://localhost:4200", "http://localhost:4200")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
         });
 });
 
-// ----------------------
-// [Swagger] Servicios
-// ----------------------
-builder.Services.AddEndpointsApiExplorer();   // [Swagger] Explora endpoints para generar la doc
-builder.Services.AddSwaggerGen();             // [Swagger] Generador de OpenAPI/Swagger
+// Swagger
+//builder.Services.AddEndpointsApiExplorer();
+//builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Middleware pipeline
 app.UseCors("AllowAngular");
 
-// ----------------------
-// [Swagger] Middleware
-//     Podés dejarlo siempre activo o solo en Development (descomentar el if si preferís).
-// ----------------------
+//app.UseSwagger();
+//app.UseSwaggerUI();
 
-// if (app.Environment.IsDevelopment())
-// {
-app.UseSwagger();                             // [Swagger] Publica /swagger/v1/swagger.json
-app.UseSwaggerUI();                           // [Swagger] UI en /swagger
-// }
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
+app.MapControllers();
+
+app.Run();
+*/
+using ComprasAPI.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Configuracion JWT con Keycloak - VERSION SIMPLIFICADA
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "http://localhost:8080/realms/ds-2025-realm";
+        options.RequireHttpsMetadata = false;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false,
+            ValidateIssuer = true,
+            ValidIssuer = "http://localhost:8080/realms/ds-2025-realm",
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            // Usar client_id como nombre de usuario
+            NameClaimType = "client_id"
+        };
+    });
+
+builder.Services.AddControllers();
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
+    new MySqlServerVersion(new Version(8, 0, 36))));
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular",
+        policy =>
+        {
+            policy.WithOrigins("https://localhost:4200", "http://localhost:4200")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
+var app = builder.Build();
+
+// Middleware pipeline
+app.UseCors("AllowAngular");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

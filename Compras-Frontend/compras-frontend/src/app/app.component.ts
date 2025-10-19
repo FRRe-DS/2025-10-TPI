@@ -27,18 +27,12 @@ import { filter } from 'rxjs/operators';
 })
 export class AppComponent implements OnInit {
   private authService = inject(AuthService);
-  private apiService = inject(ApiService);
   private router = inject(Router);
 
   ngOnInit() {
     console.log('🚀 AppComponent iniciado');
     
-    // Solo verificar autenticación en cambios de ruta, no forzar redirección
-    this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: NavigationEnd) => {
-        console.log('📍 Cambio de ruta:', event.url);
-        // No forzar redirección automática aquí
-      });
+    // No necesitamos hacer nada más aquí
+    // Keycloak se inicializa automáticamente en el AuthService
   }
 }

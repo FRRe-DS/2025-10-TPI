@@ -18,6 +18,7 @@ namespace ComprasAPI.Data
         public DbSet<BookingProduct> BookingProducts { get; set; }
         public DbSet<Tracking> Trackings { get; set; }
 
+        public DbSet<Tracking> Product { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
