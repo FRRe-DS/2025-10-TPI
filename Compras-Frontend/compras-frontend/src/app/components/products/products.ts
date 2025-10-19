@@ -22,9 +22,11 @@ import { ApiService } from '../../services/api';
       <div class="text-center mt-4" *ngIf="userName">
         <div class="alert alert-info">
           <h5>✅ Sesión activa como: {{userName}}</h5>
+<!--
           <button class="btn btn-warning btn-sm" (click)="forceLogout()">
             🔄 Forzar Logout de Prueba
           </button>
+-->
         </div>
       </div>
 

@@ -50,7 +50,7 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     this.userName = this.authService.getUserName();
-    this.userEmail = this.authService.getEmail();
+    //this.userEmail = this.authService.getEmail();
   }
 
   loadCompras(): void {
