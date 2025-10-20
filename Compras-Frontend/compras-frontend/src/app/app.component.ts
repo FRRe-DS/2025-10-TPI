@@ -1,30 +1,28 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { DemoService } from './services/demo.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink],
   template: `
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-      <div class="container">
-        <a class="navbar-brand" routerLink="/dashboard">Compras App</a>
-        <div class="navbar-nav ms-auto">
-          <a class="nav-link" routerLink="/login">Login</a>
-          <a class="nav-link" routerLink="/register">Register</a>
-        </div>
-      </div>
-    </nav>
-    
-    <main>
-      <router-outlet></router-outlet>
-    </main>
-  `,
-  styles: [`
-    main { min-height: calc(100vh - 56px); }
-  `]
+    <div class="p-4">
+      <h1>Prueba JWT Keycloak + .NET</h1>
+      <button class="btn btn-primary" (click)="probar()">Llamar API protegida</button>
+      <p *ngIf="respuesta">{{ respuesta }}</p>
+    </div>
+  `
 })
-export class AppComponent {
-  title = 'compras-frontend';
+export class AppComponent implements OnInit {
+  respuesta?: string;
+
+  constructor(private demoService: DemoService) {}
+
+  ngOnInit(): void {}
+
+  probar() {
+    this.demoService.getDemo().subscribe({
+      next: res => this.respuesta = res,
+      error: err => this.respuesta = 'Error: ' + JSON.stringify(err)
+    });
+  }
 }
