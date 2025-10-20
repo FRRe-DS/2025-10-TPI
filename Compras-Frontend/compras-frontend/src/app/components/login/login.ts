@@ -154,38 +154,45 @@ export class LoginComponent implements OnInit {
   }
 
   async checkAuthStatus() {
-  try {
-    this.debugInfo = 'Verificando estado...';
-    
-    const isLoggedIn = await this.authService.isLoggedIn();
-    const debugStatus = await this.authService.debugAuthStatus();
-    
-    this.debugInfo = `Estado: ${debugStatus}<br>
-                     Autenticado: ${isLoggedIn ? 'SÍ' : 'NO'}`;
-    
-    if (isLoggedIn) {
-      this.debugInfo += '<br>✅ Redirigiendo a compras...';
-      setTimeout(() => {
-        this.router.navigate(['/compras']);
-      }, 1000);
+    try {
+      this.debugInfo = 'Verificando estado...';
+      
+      const isLoggedIn = this.authService.isLoggedIn();
+      const debugStatus = await this.authService.debugAuthStatus();
+      
+      this.debugInfo = debugStatus;
+      
+      if (isLoggedIn) {
+        this.debugInfo += '<br>✅ Redirigiendo a compras...';
+        setTimeout(() => {
+          this.router.navigate(['/compras']);
+        }, 1000);
+      }
+    } catch (error: unknown) {
+      this.debugInfo = `Error: ${this.getErrorMessage(error)}`;
     }
-  } catch (error: any) {
-    this.debugInfo = `Error: ${error.message || error}`;
-    console.error('Error verificando autenticación:', error);
   }
-}
 
-  async login() {
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    } else if (typeof error === 'string') {
+      return error;
+    } else {
+      return 'Error desconocido';
+    }
+  }
+
+  login() {
     this.isLoading = true;
     this.debugInfo = 'Iniciando proceso de login...';
     
     try {
-      await this.authService.login();
-      // La redirección la maneja el servicio
-    } catch (error: any) {
+      this.authService.login();
+      // La redirección la maneja el servicio automáticamente
+    } catch (error: unknown) {
       this.isLoading = false;
-      this.debugInfo = `Error en login: ${error.message || error}`;
-      console.error('Error en login:', error);
+      this.debugInfo = `Error en login: ${this.getErrorMessage(error)}`;
     }
   }
 

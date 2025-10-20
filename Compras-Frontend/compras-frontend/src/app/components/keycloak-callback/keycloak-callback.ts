@@ -55,13 +55,8 @@ export class KeycloakCallbackComponent implements OnInit {
 
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-<<<<<<< Updated upstream
-import { Router } from '@angular/router';
-import { ManualAuthService } from '../../services/manual-auth.service';
-=======
 import { Router, ActivatedRoute } from '@angular/router';
-import { AuthService } from '../../services/auth'; // Tu AuthService actualizado
->>>>>>> Stashed changes
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-keycloak-callback',
@@ -73,79 +68,18 @@ import { AuthService } from '../../services/auth'; // Tu AuthService actualizado
         <div class="spinner-border text-primary mb-3" role="status"></div>
         <h4>Procesando autenticación</h4>
         <p class="text-muted">{{ statusMessage }}</p>
-<<<<<<< Updated upstream
-        <p class="small text-info">{{ debugMessage }}</p>
-=======
->>>>>>> Stashed changes
+        <p class="small text-info">{{ debugInfo }}</p>
       </div>
     </div>
   `
 })
 export class KeycloakCallbackComponent implements OnInit {
-<<<<<<< Updated upstream
-  private manualAuthService = inject(ManualAuthService);
-  private router = inject(Router);
-
-  statusMessage: string = 'Procesando...';
-  debugMessage: string = '';
-
-  async ngOnInit() {
-    console.log('🔄 Callback recibido - Usando flujo manual');
-    await this.processAuthentication();
-  }
-
-  private async processAuthentication(): Promise<void> {
-    try {
-      // Paso 1: Extraer código
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-
-      this.statusMessage = 'Verificando código...';
-      this.debugMessage = 'Extrayendo código de la URL...';
-
-      if (!code) {
-        throw new Error('No se encontró código de autorización');
-      }
-
-      this.statusMessage = 'Intercambiando código por token...';
-      this.debugMessage = 'Comunicándose con Keycloak...';
-
-      // Paso 2: Intercambiar código por token (MANUAL)
-      const token = await this.manualAuthService.exchangeCodeForToken(code);
-      
-      if (token) {
-        this.statusMessage = '✅ Autenticación exitosa!';
-        this.debugMessage = 'Redirigiendo al portal...';
-        
-        console.log('🎉 AUTENTICACIÓN MANUAL EXITOSA');
-        console.log('🔑 Token almacenado:', token.substring(0, 50) + '...');
-
-        // Paso 3: Redirigir
-        setTimeout(() => {
-          window.history.replaceState({}, document.title, '/');
-          this.router.navigate(['/compras']);
-        }, 1000);
-        
-      } else {
-        throw new Error('No se pudo obtener token');
-      }
-
-    } catch (error: any) {
-      console.error('❌ Error en autenticación manual:', error);
-      this.statusMessage = '❌ Error en autenticación';
-      this.debugMessage = error.message || 'Error desconocido';
-      
-      setTimeout(() => {
-        this.router.navigate(['/login']);
-      }, 3000);
-    }
-  }
-=======
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
   statusMessage: string = 'Obteniendo código de autorización...';
+  debugInfo: string = '';
 
   async ngOnInit() {
     console.log('🔄 KeycloakCallback - Iniciando procesamiento manual');
@@ -155,7 +89,18 @@ export class KeycloakCallbackComponent implements OnInit {
     } catch (error) {
       console.error('❌ Error en callback:', error);
       this.statusMessage = 'Error en autenticación';
+      this.debugInfo = this.getErrorMessage(error);
       setTimeout(() => this.redirectToLogin(), 3000);
+    }
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    } else if (typeof error === 'string') {
+      return error;
+    } else {
+      return 'Error desconocido en la autenticación';
     }
   }
 
@@ -164,10 +109,7 @@ export class KeycloakCallbackComponent implements OnInit {
     const code = this.route.snapshot.queryParamMap.get('code');
     const error = this.route.snapshot.queryParamMap.get('error');
     
-    console.log('📥 Parámetros de callback:', { 
-      code: code ? `✅ (${code.substring(0, 20)}...)` : '❌ No code',
-      error: error || '❌ No error' 
-    });
+    this.debugInfo = `Code: ${code ? '✅' : '❌'} | Error: ${error || 'None'}`;
 
     if (error) {
       throw new Error(`Error de Keycloak: ${error}`);
@@ -178,7 +120,6 @@ export class KeycloakCallbackComponent implements OnInit {
     }
 
     this.statusMessage = 'Intercambiando código por token...';
-    console.log('🔄 Intercambiando código por token...');
     
     // Usar el AuthService para obtener el token
     const token = await this.authService.exchangeCodeForToken(code);
@@ -187,29 +128,25 @@ export class KeycloakCallbackComponent implements OnInit {
       throw new Error('No se pudo obtener el token');
     }
 
-    console.log('✅ Token obtenido correctamente');
-
     // Guardar el token
     this.authService.saveManualToken(token);
     
     this.statusMessage = '✅ ¡Autenticación exitosa! Redirigiendo...';
+    this.debugInfo = 'Token guardado correctamente';
     
-    // Redirigir después de breve espera
+    // Redirigir inmediatamente
     setTimeout(() => {
       this.redirectToPortal();
-    }, 1000);
+    }, 500);
   }
 
   private redirectToPortal() {
     console.log('📍 Redirigiendo a página principal...');
-    // Limpiar URL del callback
     window.history.replaceState({}, document.title, '/');
     this.router.navigate(['/compras']);
   }
 
   private redirectToLogin() {
-    console.log('📍 Redirigiendo a login por error...');
     this.router.navigate(['/']);
   }
->>>>>>> Stashed changes
 }

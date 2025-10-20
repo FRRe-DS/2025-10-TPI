@@ -37,7 +37,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 // auth.interceptor.ts
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { from, switchMap } from 'rxjs';
 import { AuthService } from '../services/auth';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
@@ -45,23 +44,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   // Solo agregar token a requests a tu API
   if (req.url.includes('localhost:7248')) {
-    // Convertir la Promise a Observable usando from() y switchMap
-    return from(authService.getToken()).pipe(
-      switchMap(token => {
-        if (token) {
-          console.log('✅ Añadiendo token a la request');
-          const authReq = req.clone({
-            setHeaders: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          return next(authReq);
-        } else {
-          console.warn('⚠️ No hay token disponible para la request');
-          return next(req);
+    const token = authService.getToken();
+    
+    if (token) {
+      console.log('✅ Interceptor - Añadiendo token a la request');
+      const authReq = req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
         }
-      })
-    );
+      });
+      return next(authReq);
+    } else {
+      console.warn('⚠️ Interceptor - No hay token disponible');
+    }
   }
 
   return next(req);
