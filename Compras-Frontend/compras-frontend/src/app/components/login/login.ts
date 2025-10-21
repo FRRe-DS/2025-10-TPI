@@ -124,9 +124,11 @@ import { AuthService } from '../../services/auth';
                 Redirigiendo...
               </span>
             </button>
+
+
             
-            <button class="btn btn-outline-secondary" (click)="checkStatus()">
-              🔄 Verificar Estado
+            <button class="btn btn-outline-primary" (click)="goToRegister()">
+              📝 Registrarse
             </button>
           </div>
           
@@ -152,6 +154,7 @@ export class LoginComponent implements OnInit {
     console.log('🔍 LoginComponent iniciado');
     await this.checkAuthStatus();
   }
+
 
   async checkAuthStatus() {
     try {
@@ -198,5 +201,9 @@ export class LoginComponent implements OnInit {
 
   async checkStatus() {
     await this.checkAuthStatus();
+  }
+
+  goToRegister() {
+    this.router.navigate(['/register']);
   }
 }

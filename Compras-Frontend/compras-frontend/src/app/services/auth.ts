@@ -72,12 +72,39 @@ export class AuthService {
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  repeatPassword: string;
+  firstName: string;
+  lastName: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private http = inject(HttpClient);
+  private apiUrl = 'https://localhost:7248/api/auth/register'; // 🔧 Ajustá el puerto de tu API
   private clientSecret = '66ff9787-4fa5-46b3-b546-4ccbe604d233';
+
+ 
+
+  // 🆕 MÉTODO DE REGISTRO (crea usuario en tu API y en Keycloak)
+  registerUser(request: RegisterRequest): Promise<string> {
+    console.log('🧾 Enviando solicitud de registro al backend...');
+
+    return this.http.post(this.apiUrl, request, { responseType: 'text' })
+      .toPromise()
+      .then(response => {
+        console.log('✅ Usuario registrado correctamente:', response);
+        return 'Registro exitoso';
+      })
+      .catch(error => {
+        console.error('❌ Error en el registro:', error);
+        throw error;
+      });
+  }
 
   // ===== MÉTODOS DE AUTENTICACIÓN MANUAL =====
   
