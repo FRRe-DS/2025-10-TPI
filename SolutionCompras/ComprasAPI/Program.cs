@@ -1,7 +1,7 @@
 ﻿using ComprasAPI.Controllers;
 using ComprasAPI.Data;
 using ComprasAPI.Models;
-using ComprasAPI.Services;  // ← AÑADIR este using
+using ComprasAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -15,10 +15,9 @@ builder.Configuration["Jwt:Issuer"] = "ComprasAPI";
 builder.Configuration["Jwt:Audience"] = "ComprasUsuarios";
 builder.Services.AddHttpClient();
 
-// ✅ 1. CONFIGURAR STOCK SERVICE (AGREGAR ESTO)
+// ✅ 1. CONFIGURAR STOCK SERVICE
 builder.Services.AddHttpClient<IStockService, StockService>((provider, client) =>
 {
-    // Usar configuración de appsettings.json o valor por defecto
     var config = provider.GetRequiredService<IConfiguration>();
     var stockApiUrl = config["ExternalApis:Stock:BaseUrl"] ?? "http://localhost:5001";
 
@@ -27,27 +26,35 @@ builder.Services.AddHttpClient<IStockService, StockService>((provider, client) =
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
-// ✅ 2. REGISTRAR EL SERVICIO (AGREGAR ESTO)
+// ✅ 2. CONFIGURAR LOGÍSTICA SERVICE
+builder.Services.AddHttpClient<ILogisticaService, LogisticaService>((provider, client) =>
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    var logisticaApiUrl = config["ExternalApis:Logistica:BaseUrl"] ?? "http://localhost:5002";
+
+    client.BaseAddress = new Uri(logisticaApiUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+// ✅ 3. REGISTRAR SERVICIOS
 builder.Services.AddScoped<IStockService, StockService>();
+builder.Services.AddScoped<ILogisticaService, LogisticaService>();
 
-//AÑADIR JWT CON KEYCLOACK
-
+// AÑADIR JWT CON KEYCLOACK
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        //configure keycloak settings
         var configuration = builder.Configuration;
 
         var authority = configuration["Keycloak:Authority"];
         var audience = configuration["Keycloak:Audience"];
-        //var metadataAddress = configuration["Keycloak:MetadataAddress"];
         var requireHttpsMetadata = configuration.GetValue<bool>("Keycloak:RequireHttpsMetadata");
 
         options.Authority = authority;
         options.Audience = audience;
-        //options.MetadataAddress = metadataAddress;
-        options.RequireHttpsMetadata = options.RequireHttpsMetadata = bool.Parse(builder.Configuration["Keycloak:RequireHttpsMetadata"]);
+        options.RequireHttpsMetadata = bool.Parse(builder.Configuration["Keycloak:RequireHttpsMetadata"]);
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -65,7 +72,6 @@ builder.Services
             OnMessageReceived = e =>
             {
                 return Task.CompletedTask;
-
             },
             OnTokenValidated = e =>
             {
@@ -80,13 +86,7 @@ builder.Services
                 return Task.CompletedTask;
             }
         };
-
-
-
-
     });
-
-
 
 builder.Services.AddControllers();
 
@@ -100,7 +100,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAngular",
         policy =>
         {
-            policy.WithOrigins("https://localhost:4200", "http://localhost:4200") // URL de tu Angular
+            policy.WithOrigins("https://localhost:4200", "http://localhost:4200")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -110,25 +110,18 @@ builder.Services.AddCors(options =>
 // ----------------------
 // [Swagger] Servicios
 // ----------------------
-builder.Services.AddEndpointsApiExplorer();   // [Swagger] Explora endpoints para generar la doc
-builder.Services.AddSwaggerGen();             // [Swagger] Generador de OpenAPI/Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
 app.UseCors("AllowAngular");
 
-
-
 // ----------------------
 // [Swagger] Middleware
-//     Podés dejarlo siempre activo o solo en Development (descomentar el if si preferís).
 // ----------------------
-
-// if (app.Environment.IsDevelopment())
-// {
-app.UseSwagger();                             // [Swagger] Publica /swagger/v1/swagger.json
-app.UseSwaggerUI();                           // [Swagger] UI en /swagger
-// }
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

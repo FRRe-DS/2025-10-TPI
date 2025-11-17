@@ -1,5 +1,6 @@
-﻿using System.Text.Json;
-using ComprasAPI.Models.DTOs;
+﻿using ComprasAPI.Models.DTOs;
+using System.Text;
+using System.Text.Json;
 
 namespace ComprasAPI.Services
 {
@@ -67,6 +68,107 @@ namespace ComprasAPI.Services
                 // ✅ BUSCAR en datos de prueba
                 var productos = GetProductosDePrueba();
                 return productos.FirstOrDefault(p => p.Id == id);
+            }
+        }
+
+        public async Task<ReservaOutput> CrearReservaAsync(ReservaInput reserva)
+        {
+            try
+            {
+                _logger.LogInformation("📦 Creando reserva en Stock API...");
+
+                var json = JsonSerializer.Serialize(reserva);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("/reservas", content);
+                response.EnsureSuccessStatusCode();
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<ReservaOutput>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "❌ Stock API no disponible - Creando reserva de prueba");
+                return CrearReservaPrueba(reserva);
+            }
+        }
+
+        public async Task<ReservaCompleta> ObtenerReservaAsync(int idReserva, int usuarioId)
+        {
+            try
+            {
+                _logger.LogInformation($"📦 Obteniendo reserva {idReserva} desde Stock API...");
+
+                var response = await _httpClient.GetAsync($"/reservas/{idReserva}?usuarioId={usuarioId}");
+                response.EnsureSuccessStatusCode();
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<ReservaCompleta>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, $"❌ Error obteniendo reserva {idReserva} - Usando datos de prueba");
+                return ObtenerReservaPrueba(idReserva, usuarioId);
+            }
+        }
+
+        // ✅ MÉTODOS DE PRUEBA PARA RESERVAS
+        private ReservaOutput CrearReservaPrueba(ReservaInput reserva)
+        {
+            return new ReservaOutput
+            {
+                IdReserva = new Random().Next(1000, 9999),
+                IdCompra = reserva.IdCompra,
+                UsuarioId = reserva.UsuarioId,
+                Estado = "confirmado",
+                ExpiresAt = DateTime.UtcNow.AddHours(24).ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                FechaCreacion = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+            };
+        }
+
+        private ReservaCompleta ObtenerReservaPrueba(int idReserva, int usuarioId)
+        {
+            return new ReservaCompleta
+            {
+                IdReserva = idReserva,
+                IdCompra = $"COMPRA-{idReserva}",
+                UsuarioId = usuarioId,
+                Estado = "confirmado",
+                ExpiresAt = DateTime.UtcNow.AddHours(24).ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                FechaCreacion = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                Productos = new List<ProductoReservaDetalle>
+                {
+                    new ProductoReservaDetalle
+                    {
+                        IdProducto = 1,
+                        Nombre = "Laptop Gaming",
+                        Cantidad = 2,
+                        PrecioUnitario = 1500.00M
+                    }
+                }
+            };
+        }
+
+        public async Task<bool> CancelarReservaAsync(int idReserva, int usuarioId)
+        {
+            try
+            {
+                _logger.LogInformation($"📦 Cancelando reserva {idReserva}...");
+
+                // En una API real, harías DELETE /reservas/{id}?usuarioId={usuarioId}
+                // Por ahora simulamos éxito
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ Error cancelando reserva {idReserva}");
+                return false;
             }
         }
 

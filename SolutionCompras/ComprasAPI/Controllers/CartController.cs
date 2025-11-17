@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ComprasAPI.Data;
+﻿using ComprasAPI.Data;
 using ComprasAPI.Models;
+using ComprasAPI.Models.DTOs;
 using ComprasAPI.Services;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace ComprasAPI.Controllers
 {
@@ -51,14 +52,43 @@ namespace ComprasAPI.Controllers
                     _logger.LogInformation("🆕 Creando carrito vacío para nuevo usuario");
                     // Crear carrito vacío si no existe
                     cart = new Cart { UserId = userId.Value, Items = new List<CartItem>() };
-                    return Ok(cart);
+                    return Ok(new CartDto
+                    {
+                        Id = 0,
+                        Total = 0,
+                        UserId = userId.Value,
+                        Items = new List<CartItemDto>()
+                    });
                 }
 
                 // Calcular total actualizado
                 cart.Total = cart.Items.Sum(item => item.Product.Price * item.Quantity);
                 _logger.LogInformation($"✅ Carrito obtenido: {cart.Items.Count} items, Total: {cart.Total}");
 
-                return Ok(cart);
+                // ✅ USAR DTO PARA EVITAR CICLOS
+                var cartDto = new CartDto
+                {
+                    Id = cart.Id,
+                    Total = cart.Total,
+                    UserId = cart.UserId,
+                    Items = cart.Items.Select(item => new CartItemDto
+                    {
+                        Id = item.Id,
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                        Product = new ProductDto
+                        {
+                            Id = item.Product.Id,
+                            Name = item.Product.Name,
+                            Description = item.Product.Description,
+                            Price = item.Product.Price,
+                            Stock = item.Product.Stock,
+                            Category = item.Product.Category
+                        }
+                    }).ToList()
+                };
+
+                return Ok(cartDto);
             }
             catch (Exception ex)
             {
