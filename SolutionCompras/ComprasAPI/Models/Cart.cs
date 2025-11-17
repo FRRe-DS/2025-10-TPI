@@ -9,6 +9,6 @@ namespace ComprasAPI.Models
         public ICollection<CartItem> Items { get; set; } = new List<CartItem>();
         public decimal Total { get; set; }
 
-        public int UserId { get; set; }  // quién es dueño del carrito
+        public int UserId { get; set; }  // ← CAMBIADO a string para Keycloak GUIDs
     }
 }
