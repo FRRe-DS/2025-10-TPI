@@ -115,6 +115,63 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// ✅ EJECUTAR MIGRACIONES AUTOMÁTICAMENTE AL INICIAR
+try
+{
+    Console.WriteLine("🔧 Iniciando verificación de migraciones...");
+
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        var context = services.GetRequiredService<ApplicationDbContext>();
+
+        // Verificar si podemos conectar a la base de datos
+        if (await context.Database.CanConnectAsync())
+        {
+            Console.WriteLine("✅ Base de datos conectada exitosamente");
+
+            // Verificar si hay migraciones pendientes
+            var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+            if (pendingMigrations.Any())
+            {
+                Console.WriteLine($"🔧 Aplicando {pendingMigrations.Count()} migraciones pendientes...");
+                foreach (var migration in pendingMigrations)
+                {
+                    Console.WriteLine($"   - {migration}");
+                }
+
+                await context.Database.MigrateAsync();
+                Console.WriteLine("✅ Todas las migraciones aplicadas correctamente");
+            }
+            else
+            {
+                Console.WriteLine("✅ No hay migraciones pendientes");
+            }
+
+            // Verificar si la tabla Users existe y tiene datos
+            try
+            {
+                var userCount = await context.Users.CountAsync();
+                Console.WriteLine($"✅ Tabla Users existe y tiene {userCount} registros");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error al acceder a la tabla Users: {ex.Message}");
+                Console.WriteLine("💡 Esto puede ser normal si la tabla está vacía o recién creada");
+            }
+        }
+        else
+        {
+            Console.WriteLine("❌ No se pudo conectar a la base de datos");
+        }
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️ Error durante la verificación de migraciones: {ex.Message}");
+    Console.WriteLine("💡 La aplicación continuará iniciando...");
+}
+
 app.UseCors("AllowAngular");
 
 // ----------------------
@@ -129,4 +186,5 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+Console.WriteLine("🚀 Aplicación ComprasAPI iniciada correctamente");
 app.Run();

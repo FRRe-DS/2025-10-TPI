@@ -12,23 +12,40 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - ./Database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - compras_db_data:/var/lib/mysql
+      - ./Database/init-new.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - compras-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   compras-api:
     build: .
     container_name: compras-backend
     environment:
       - ConnectionStrings__DefaultConnection=Server=compras-db;Database=DBComprasAPI;User=compras_user;Password=compras_password
+      - Keycloak__Authority=http://host.docker.internal:8080/realms/ds-2025-realm
+      - Keycloak__AdminBaseUrl=http://host.docker.internal:8080
+      - Keycloak__Audience=grupo-10
+      - Keycloak__ClientId=grupo-10
+      - Keycloak__ClientSecret=66ff9787-4fa5-46b3-b546-4ccbe604d233
+      - Keycloak__RequireHttpsMetadata=false
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
     ports:
       - "5000:80"
     depends_on:
-      - compras-db
+      compras-db:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - compras-network
+
+volumes:
+  compras_db_data:
 
 networks:
   compras-network:
