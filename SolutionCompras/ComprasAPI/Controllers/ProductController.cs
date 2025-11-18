@@ -22,16 +22,16 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation("📦 Solicitando todos los productos desde Stock API...");
+                _logger.LogInformation(" Solicitando todos los productos desde Stock API...");
 
                 var productos = await _stockService.GetAllProductsAsync();
 
-                _logger.LogInformation($"✅ Devueltos {productos.Count} productos");
+                _logger.LogInformation($" Devueltos {productos.Count} productos");
                 return Ok(productos);
             }
             catch (System.Net.Http.HttpRequestException ex)
             {
-                _logger.LogError(ex, "❌ No se pudo conectar con Stock API");
+                _logger.LogError(ex, " No se pudo conectar con Stock API");
                 return StatusCode(502, new
                 {
                     error = "Servicio Stock no disponible",
@@ -40,7 +40,7 @@ namespace ComprasAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error interno al obtener productos");
+                _logger.LogError(ex, " Error interno al obtener productos");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor",
@@ -55,13 +55,13 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation($"📦 Solicitando producto ID: {id} desde Stock API");
+                _logger.LogInformation($" Solicitando producto ID: {id} desde Stock API");
 
                 var producto = await _stockService.GetProductByIdAsync(id);
 
                 if (producto == null)
                 {
-                    _logger.LogWarning($"⚠️ Producto {id} no encontrado");
+                    _logger.LogWarning($" Producto {id} no encontrado");
                     return NotFound(new
                     {
                         error = "Producto no encontrado",
@@ -69,7 +69,7 @@ namespace ComprasAPI.Controllers
                     });
                 }
 
-                _logger.LogInformation($"✅ Producto {id} encontrado: {producto.Nombre}");
+                _logger.LogInformation($" Producto {id} encontrado: {producto.Nombre}");
                 return Ok(producto);
             }
             catch (System.Net.Http.HttpRequestException ex) when (ex.Message.Contains("404"))
@@ -82,7 +82,7 @@ namespace ComprasAPI.Controllers
             }
             catch (System.Net.Http.HttpRequestException ex)
             {
-                _logger.LogError(ex, "❌ No se pudo conectar con Stock API");
+                _logger.LogError(ex, " No se pudo conectar con Stock API");
                 return StatusCode(502, new
                 {
                     error = "Servicio Stock no disponible",
@@ -91,7 +91,7 @@ namespace ComprasAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"❌ Error al obtener producto {id}");
+                _logger.LogError(ex, $" Error al obtener producto {id}");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor",

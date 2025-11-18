@@ -31,14 +31,14 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation("🛒 Obteniendo carrito del usuario...");
+                _logger.LogInformation("Obteniendo carrito del usuario...");
 
                 var userId = await GetCurrentUserId();
-                _logger.LogInformation($"🔑 UserId obtenido: {userId}");
+                _logger.LogInformation($"UserId obtenido: {userId}");
 
                 if (userId == null)
                 {
-                    _logger.LogWarning("❌ UserId es null - Usuario no autorizado o no encontrado en BD local");
+                    _logger.LogWarning("UserId es null - Usuario no autorizado o no encontrado en BD local");
                     return Unauthorized(new { error = "No autorizado", code = "UNAUTHORIZED" });
                 }
 
@@ -49,7 +49,7 @@ namespace ComprasAPI.Controllers
 
                 if (cart == null)
                 {
-                    _logger.LogInformation("🆕 Creando carrito vacío para nuevo usuario");
+                    _logger.LogInformation("Creando carrito vacío para nuevo usuario");
                     // Crear carrito vacío si no existe
                     cart = new Cart { UserId = userId.Value, Items = new List<CartItem>() };
                     return Ok(new CartDto
@@ -63,9 +63,9 @@ namespace ComprasAPI.Controllers
 
                 // Calcular total actualizado
                 cart.Total = cart.Items.Sum(item => item.Product.Price * item.Quantity);
-                _logger.LogInformation($"✅ Carrito obtenido: {cart.Items.Count} items, Total: {cart.Total}");
+                _logger.LogInformation($"Carrito obtenido: {cart.Items.Count} items, Total: {cart.Total}");
 
-                // ✅ USAR DTO PARA EVITAR CICLOS
+                // USAR DTO PARA EVITAR CICLOS
                 var cartDto = new CartDto
                 {
                     Id = cart.Id,
@@ -92,7 +92,7 @@ namespace ComprasAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error al obtener carrito");
+                _logger.LogError(ex, "Error al obtener carrito");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor",
@@ -108,32 +108,32 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation("🛒 Iniciando AddToCart...");
+                _logger.LogInformation("Iniciando AddToCart...");
 
                 var userId = await GetCurrentUserId();
-                _logger.LogInformation($"🔑 UserId obtenido: {userId}");
+                _logger.LogInformation($"UserId obtenido: {userId}");
 
                 if (userId == null)
                 {
-                    _logger.LogWarning("❌ UserId es null - Usuario no autorizado o no encontrado en BD local");
+                    _logger.LogWarning("UserId es null - Usuario no autorizado o no encontrado en BD local");
                     return Unauthorized(new { error = "No autorizado", code = "UNAUTHORIZED" });
                 }
 
-                _logger.LogInformation($"✅ Usuario autenticado: {userId}");
+                _logger.LogInformation($"Usuario autenticado: {userId}");
 
                 // 1. Verificar que el producto existe en Stock API
-                _logger.LogInformation($"📦 Verificando producto {request.ProductId} en Stock API...");
+                _logger.LogInformation($"Verificando producto {request.ProductId} en Stock API...");
                 var stockProduct = await _stockService.GetProductByIdAsync(request.ProductId);
                 if (stockProduct == null)
                 {
-                    _logger.LogWarning($"❌ Producto {request.ProductId} no encontrado en Stock API");
+                    _logger.LogWarning($"Producto {request.ProductId} no encontrado en Stock API");
                     return NotFound(new { error = "Producto no encontrado", code = "PRODUCT_NOT_FOUND" });
                 }
 
                 // 2. Verificar stock disponible
                 if (stockProduct.StockDisponible < request.Quantity)
                 {
-                    _logger.LogWarning($"❌ Stock insuficiente. Solicitado: {request.Quantity}, Disponible: {stockProduct.StockDisponible}");
+                    _logger.LogWarning($"Stock insuficiente. Solicitado: {request.Quantity}, Disponible: {stockProduct.StockDisponible}");
                     return BadRequest(new
                     {
                         error = "Stock insuficiente",
@@ -142,7 +142,7 @@ namespace ComprasAPI.Controllers
                     });
                 }
 
-                _logger.LogInformation($"✅ Stock disponible: {stockProduct.StockDisponible}");
+                _logger.LogInformation($"Stock disponible: {stockProduct.StockDisponible}");
 
                 // 3. Obtener o crear carrito
                 var cart = await _context.Carts
@@ -155,11 +155,11 @@ namespace ComprasAPI.Controllers
                     cart = new Cart { UserId = userId.Value };
                     _context.Carts.Add(cart);
                     await _context.SaveChangesAsync(); // Guardar para obtener ID
-                    _logger.LogInformation($"🆕 Carrito creado: {cart.Id}");
+                    _logger.LogInformation($" Carrito creado: {cart.Id}");
                 }
                 else
                 {
-                    _logger.LogInformation($"📝 Carrito existente: {cart.Id} con {cart.Items.Count} items");
+                    _logger.LogInformation($" Carrito existente: {cart.Id} con {cart.Items.Count} items");
                 }
 
                 // 4. Buscar o crear producto local (snapshot)
@@ -180,7 +180,7 @@ namespace ComprasAPI.Controllers
                     };
                     _context.Products.Add(localProduct);
                     await _context.SaveChangesAsync();
-                    _logger.LogInformation($"📦 Producto local creado: {localProduct.Name} (ID: {localProduct.Id})");
+                    _logger.LogInformation($" Producto local creado: {localProduct.Name} (ID: {localProduct.Id})");
                 }
 
                 // 5. Agregar o actualizar item en carrito
@@ -188,7 +188,7 @@ namespace ComprasAPI.Controllers
                 if (existingItem != null)
                 {
                     existingItem.Quantity += request.Quantity;
-                    _logger.LogInformation($"📝 Producto actualizado: {existingItem.Product.Name} - Cantidad: {existingItem.Quantity}");
+                    _logger.LogInformation($" Producto actualizado: {existingItem.Product.Name} - Cantidad: {existingItem.Quantity}");
                 }
                 else
                 {
@@ -200,7 +200,7 @@ namespace ComprasAPI.Controllers
                         Product = localProduct
                     };
                     cart.Items.Add(cartItem);
-                    _logger.LogInformation($"🆕 Producto agregado: {localProduct.Name} - Cantidad: {request.Quantity}");
+                    _logger.LogInformation($" Producto agregado: {localProduct.Name} - Cantidad: {request.Quantity}");
                 }
 
                 // 6. Actualizar total del carrito
@@ -208,7 +208,7 @@ namespace ComprasAPI.Controllers
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"✅ Carrito guardado. Total: {cart.Total}, Items: {cart.Items.Count}");
+                _logger.LogInformation($" Carrito guardado. Total: {cart.Total}, Items: {cart.Items.Count}");
 
                 return Ok(new
                 {
@@ -220,7 +220,7 @@ namespace ComprasAPI.Controllers
             }
             catch (System.Net.Http.HttpRequestException ex)
             {
-                _logger.LogError(ex, "❌ Error al conectar con Stock API");
+                _logger.LogError(ex, " Error al conectar con Stock API");
                 return StatusCode(502, new
                 {
                     error = "Servicio Stock no disponible",
@@ -229,7 +229,7 @@ namespace ComprasAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error al agregar producto al carrito");
+                _logger.LogError(ex, " Error al agregar producto al carrito");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor",
@@ -245,12 +245,12 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation("🛒 Actualizando item del carrito...");
+                _logger.LogInformation(" Actualizando item del carrito...");
 
                 var userId = await GetCurrentUserId();
                 if (userId == null)
                 {
-                    _logger.LogWarning("❌ UserId es null - Usuario no autorizado");
+                    _logger.LogWarning(" UserId es null - Usuario no autorizado");
                     return Unauthorized(new { error = "No autorizado", code = "UNAUTHORIZED" });
                 }
 
@@ -261,14 +261,14 @@ namespace ComprasAPI.Controllers
 
                 if (cart == null)
                 {
-                    _logger.LogWarning("❌ Carrito no encontrado");
+                    _logger.LogWarning(" Carrito no encontrado");
                     return NotFound(new { error = "Carrito no encontrado", code = "CART_NOT_FOUND" });
                 }
 
                 var cartItem = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
                 if (cartItem == null)
                 {
-                    _logger.LogWarning($"❌ Producto {request.ProductId} no encontrado en el carrito");
+                    _logger.LogWarning($" Producto {request.ProductId} no encontrado en el carrito");
                     return NotFound(new { error = "Producto no encontrado en el carrito", code = "CART_ITEM_NOT_FOUND" });
                 }
 
@@ -278,7 +278,7 @@ namespace ComprasAPI.Controllers
                     var stockProduct = await _stockService.GetProductByIdAsync(request.ProductId);
                     if (stockProduct.StockDisponible < request.Quantity)
                     {
-                        _logger.LogWarning($"❌ Stock insuficiente al actualizar. Solicitado: {request.Quantity}, Disponible: {stockProduct.StockDisponible}");
+                        _logger.LogWarning($" Stock insuficiente al actualizar. Solicitado: {request.Quantity}, Disponible: {stockProduct.StockDisponible}");
                         return BadRequest(new
                         {
                             error = "Stock insuficiente",
@@ -293,12 +293,12 @@ namespace ComprasAPI.Controllers
                     // Eliminar item si cantidad es 0 o negativa
                     cart.Items.Remove(cartItem);
                     _context.CartItems.Remove(cartItem);
-                    _logger.LogInformation($"🗑️ Producto {cartItem.Product.Name} removido del carrito");
+                    _logger.LogInformation($" Producto {cartItem.Product.Name} removido del carrito");
                 }
                 else
                 {
                     cartItem.Quantity = request.Quantity;
-                    _logger.LogInformation($"📝 Producto {cartItem.Product.Name} actualizado a {request.Quantity} unidades");
+                    _logger.LogInformation($" Producto {cartItem.Product.Name} actualizado a {request.Quantity} unidades");
                 }
 
                 // Actualizar total
@@ -306,13 +306,13 @@ namespace ComprasAPI.Controllers
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"✅ Carrito actualizado. Total: {cart.Total}");
+                _logger.LogInformation($" Carrito actualizado. Total: {cart.Total}");
 
                 return Ok(new { message = "Carrito actualizado", total = cart.Total });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error al actualizar carrito");
+                _logger.LogError(ex, " Error al actualizar carrito");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor",
@@ -328,12 +328,12 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation($"🛒 Removiendo producto {productId} del carrito...");
+                _logger.LogInformation($" Removiendo producto {productId} del carrito...");
 
                 var userId = await GetCurrentUserId();
                 if (userId == null)
                 {
-                    _logger.LogWarning("❌ UserId es null - Usuario no autorizado");
+                    _logger.LogWarning(" UserId es null - Usuario no autorizado");
                     return Unauthorized(new { error = "No autorizado", code = "UNAUTHORIZED" });
                 }
 
@@ -344,14 +344,14 @@ namespace ComprasAPI.Controllers
 
                 if (cart == null)
                 {
-                    _logger.LogWarning("❌ Carrito no encontrado");
+                    _logger.LogWarning(" Carrito no encontrado");
                     return NotFound(new { error = "Carrito no encontrado", code = "CART_NOT_FOUND" });
                 }
 
                 var cartItem = cart.Items.FirstOrDefault(i => i.ProductId == productId);
                 if (cartItem == null)
                 {
-                    _logger.LogWarning($"❌ Producto {productId} no encontrado en el carrito");
+                    _logger.LogWarning($" Producto {productId} no encontrado en el carrito");
                     return NotFound(new { error = "Producto no encontrado en el carrito", code = "CART_ITEM_NOT_FOUND" });
                 }
 
@@ -363,13 +363,13 @@ namespace ComprasAPI.Controllers
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"✅ Producto {productId} removido. Nuevo total: {cart.Total}");
+                _logger.LogInformation($" Producto {productId} removido. Nuevo total: {cart.Total}");
 
                 return Ok(new { message = "Producto removido del carrito", total = cart.Total });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error al remover producto del carrito");
+                _logger.LogError(ex, " Error al remover producto del carrito");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor",
@@ -385,12 +385,12 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation("🛒 Vaciando carrito...");
+                _logger.LogInformation(" Vaciando carrito...");
 
                 var userId = await GetCurrentUserId();
                 if (userId == null)
                 {
-                    _logger.LogWarning("❌ UserId es null - Usuario no autorizado");
+                    _logger.LogWarning(" UserId es null - Usuario no autorizado");
                     return Unauthorized(new { error = "No autorizado", code = "UNAUTHORIZED" });
                 }
 
@@ -400,24 +400,24 @@ namespace ComprasAPI.Controllers
 
                 if (cart == null || !cart.Items.Any())
                 {
-                    _logger.LogInformation("ℹ️ Carrito ya está vacío");
+                    _logger.LogInformation(" Carrito ya está vacío");
                     return Ok(new { message = "Carrito ya está vacío" });
                 }
 
-                _logger.LogInformation($"🗑️ Eliminando {cart.Items.Count} items del carrito");
+                _logger.LogInformation($" Eliminando {cart.Items.Count} items del carrito");
                 _context.CartItems.RemoveRange(cart.Items);
                 cart.Items.Clear();
                 cart.Total = 0;
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("✅ Carrito vaciado exitosamente");
+                _logger.LogInformation(" Carrito vaciado exitosamente");
 
                 return Ok(new { message = "Carrito vaciado" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error al vaciar carrito");
+                _logger.LogError(ex, " Error al vaciar carrito");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor",
@@ -431,7 +431,7 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation("🔑 Buscando userId en base de datos local...");
+                _logger.LogInformation(" Buscando userId en base de datos local...");
 
                 // 1. Obtener el email del token de Keycloak
                 var email = User.FindFirst(ClaimTypes.Email)?.Value
@@ -440,11 +440,11 @@ namespace ComprasAPI.Controllers
 
                 if (string.IsNullOrEmpty(email))
                 {
-                    _logger.LogWarning("❌ No se encontró email en el token");
+                    _logger.LogWarning(" No se encontró email en el token");
                     return null;
                 }
 
-                _logger.LogInformation($"📧 Email del usuario: {email}");
+                _logger.LogInformation($" Email del usuario: {email}");
 
                 // 2. Buscar el usuario en tu base de datos por email
                 var user = await _context.Users
@@ -452,10 +452,10 @@ namespace ComprasAPI.Controllers
 
                 if (user == null)
                 {
-                    _logger.LogWarning($"❌ Usuario con email {email} no encontrado en base de datos local");
+                    _logger.LogWarning($" Usuario con email {email} no encontrado en base de datos local");
 
                     // Opcional: Crear usuario automáticamente si no existe
-                    _logger.LogInformation("🆕 Creando usuario automáticamente...");
+                    _logger.LogInformation(" Creando usuario automáticamente...");
                     user = new User
                     {
                         Email = email,
@@ -467,18 +467,18 @@ namespace ComprasAPI.Controllers
 
                     _context.Users.Add(user);
                     await _context.SaveChangesAsync();
-                    _logger.LogInformation($"✅ Usuario creado automáticamente: {user.Id}");
+                    _logger.LogInformation($" Usuario creado automáticamente: {user.Id}");
                 }
 
-                _logger.LogInformation($"✅ UserId de base de datos local: {user.Id}");
+                _logger.LogInformation($" UserId de base de datos local: {user.Id}");
                 return user.Id;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error al obtener userId de base de datos local");
+                _logger.LogError(ex, " Error al obtener userId de base de datos local");
 
                 // Fallback: usar userId 1 para desarrollo
-                _logger.LogInformation("🔧 Usando userId 1 como fallback");
+                _logger.LogInformation(" Usando userId 1 como fallback");
                 return 1;
             }
         }
@@ -493,7 +493,7 @@ namespace ComprasAPI.Controllers
 
             return Ok(new
             {
-                message = "🔍 Debug de Token y Usuario",
+                message = " Debug de Token y Usuario",
                 userIdFromDatabase = userId,
                 email = User.FindFirst(ClaimTypes.Email)?.Value,
                 preferred_username = User.FindFirst("preferred_username")?.Value,
@@ -512,7 +512,7 @@ namespace ComprasAPI.Controllers
                 // Usar un userId fijo para testing
                 int testUserId = 1;
 
-                _logger.LogInformation($"🔧 TEST - Agregando producto {request.ProductId} al carrito");
+                _logger.LogInformation($" TEST - Agregando producto {request.ProductId} al carrito");
 
                 var stockProduct = await _stockService.GetProductByIdAsync(request.ProductId);
                 if (stockProduct == null)
@@ -536,7 +536,7 @@ namespace ComprasAPI.Controllers
                     cart = new Cart { UserId = testUserId };
                     _context.Carts.Add(cart);
                     await _context.SaveChangesAsync();
-                    _logger.LogInformation($"🆕 Carrito TEST creado: {cart.Id}");
+                    _logger.LogInformation($" Carrito TEST creado: {cart.Id}");
                 }
 
                 var localProduct = await _context.Products
@@ -579,7 +579,7 @@ namespace ComprasAPI.Controllers
 
                 return Ok(new
                 {
-                    message = "✅ Producto agregado al carrito (MODO TEST)",
+                    message = " Producto agregado al carrito (MODO TEST)",
                     cartId = cart.Id,
                     total = cart.Total,
                     itemsCount = cart.Items.Count
@@ -587,7 +587,7 @@ namespace ComprasAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error en carrito test");
+                _logger.LogError(ex, " Error en carrito test");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor",
@@ -596,7 +596,7 @@ namespace ComprasAPI.Controllers
             }
         }
 
-        // 🧪 VER CARRITO TEST
+        //  VER CARRITO TEST
         [HttpGet("test")]
         [AllowAnonymous]
         public async Task<IActionResult> GetCartTest()
@@ -605,7 +605,7 @@ namespace ComprasAPI.Controllers
             {
                 int testUserId = 1;
 
-                _logger.LogInformation("🔧 TEST - Obteniendo carrito");
+                _logger.LogInformation(" TEST - Obteniendo carrito");
 
                 var cart = await _context.Carts
                     .Include(c => c.Items)
@@ -614,19 +614,19 @@ namespace ComprasAPI.Controllers
 
                 if (cart == null)
                 {
-                    _logger.LogInformation("🆕 Carrito TEST vacío creado");
+                    _logger.LogInformation(" Carrito TEST vacío creado");
                     cart = new Cart { UserId = testUserId, Items = new List<CartItem>() };
                     return Ok(cart);
                 }
 
                 cart.Total = cart.Items.Sum(item => item.Product.Price * item.Quantity);
-                _logger.LogInformation($"📊 Carrito TEST obtenido: {cart.Items.Count} items, Total: {cart.Total}");
+                _logger.LogInformation($" Carrito TEST obtenido: {cart.Items.Count} items, Total: {cart.Total}");
 
                 return Ok(cart);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error al obtener carrito test");
+                _logger.LogError(ex, " Error al obtener carrito test");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor",

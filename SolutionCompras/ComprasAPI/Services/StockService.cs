@@ -30,14 +30,14 @@ namespace ComprasAPI.Services
                     PropertyNameCaseInsensitive = true
                 });
 
-                _logger.LogInformation($"✅ Obtenidos {productos?.Count ?? 0} productos");
+                _logger.LogInformation($" Obtenidos {productos?.Count ?? 0} productos");
                 return productos ?? new List<ProductoStock>();
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "❌ Stock API no disponible - Usando datos de prueba");
+                _logger.LogWarning(ex, " Stock API no disponible - Usando datos de prueba");
 
-                // ✅ DATOS DE PRUEBA cuando Stock API no está disponible
+                //  DATOS DE PRUEBA cuando Stock API no está disponible
                 return GetProductosDePrueba();
             }
         }
@@ -63,9 +63,9 @@ namespace ComprasAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, $"❌ Stock API no disponible - Buscando producto {id} en datos de prueba");
+                _logger.LogWarning(ex, $" Stock API no disponible - Buscando producto {id} en datos de prueba");
 
-                // ✅ BUSCAR en datos de prueba
+                //  BUSCAR en datos de prueba
                 var productos = GetProductosDePrueba();
                 return productos.FirstOrDefault(p => p.Id == id);
             }
@@ -75,7 +75,7 @@ namespace ComprasAPI.Services
         {
             try
             {
-                _logger.LogInformation("📦 Creando reserva en Stock API...");
+                _logger.LogInformation(" Creando reserva en Stock API...");
 
                 var json = JsonSerializer.Serialize(reserva);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -91,7 +91,7 @@ namespace ComprasAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "❌ Stock API no disponible - Creando reserva de prueba");
+                _logger.LogWarning(ex, " Stock API no disponible - Creando reserva de prueba");
                 return CrearReservaPrueba(reserva);
             }
         }
@@ -100,7 +100,7 @@ namespace ComprasAPI.Services
         {
             try
             {
-                _logger.LogInformation($"📦 Obteniendo reserva {idReserva} desde Stock API...");
+                _logger.LogInformation($" Obteniendo reserva {idReserva} desde Stock API...");
 
                 var response = await _httpClient.GetAsync($"/reservas/{idReserva}?usuarioId={usuarioId}");
                 response.EnsureSuccessStatusCode();
@@ -118,7 +118,7 @@ namespace ComprasAPI.Services
             }
         }
 
-        // ✅ MÉTODOS DE PRUEBA PARA RESERVAS
+        //  MÉTODOS DE PRUEBA PARA RESERVAS
         private ReservaOutput CrearReservaPrueba(ReservaInput reserva)
         {
             return new ReservaOutput
@@ -159,7 +159,7 @@ namespace ComprasAPI.Services
         {
             try
             {
-                _logger.LogInformation($"📦 Cancelando reserva {idReserva}...");
+                _logger.LogInformation($" Cancelando reserva {idReserva}...");
 
                 // En una API real, harías DELETE /reservas/{id}?usuarioId={usuarioId}
                 // Por ahora simulamos éxito
@@ -167,12 +167,12 @@ namespace ComprasAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"❌ Error cancelando reserva {idReserva}");
+                _logger.LogError(ex, $" Error cancelando reserva {idReserva}");
                 return false;
             }
         }
 
-        // ✅ MÉTODO CON DATOS DE PRUEBA (CORREGIDO CON 'M' EN DECIMALES)
+        //  MÉTODO CON DATOS DE PRUEBA (CORREGIDO CON 'M' EN DECIMALES)
         private List<ProductoStock> GetProductosDePrueba()
         {
             return new List<ProductoStock>
@@ -227,10 +227,10 @@ namespace ComprasAPI.Services
                     Id = 3,
                     Nombre = "Teclado Mecánico",
                     Descripcion = "Teclado mecánico RGB",
-                    Precio = 120.00M,   // ← AGREGAR 'M'
+                    Precio = 120.00M,   
                     StockDisponible = 15,
-                    PesoKg = 1.1M,      // ← AGREGAR 'M'
-                    Dimensiones = new Dimensiones { LargoCm = 44.0M, AnchoCm = 14.0M, AltoCm = 3.0M }, // ← AGREGAR 'M'
+                    PesoKg = 1.1M,      
+                    Dimensiones = new Dimensiones { LargoCm = 44.0M, AnchoCm = 14.0M, AltoCm = 3.0M }, 
                     Ubicacion = new UbicacionAlmacen
                     {
                         Street = "Calle Falsa 123",

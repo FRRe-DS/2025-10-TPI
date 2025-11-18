@@ -28,13 +28,13 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation("🧪 Probando conexión con Stock...");
+                _logger.LogInformation(" Probando conexión con Stock...");
 
                 var productos = await _stockService.GetAllProductsAsync();
 
                 return Ok(new
                 {
-                    message = "✅ Stock Service funcionando",
+                    message = " Stock Service funcionando",
                     productosCount = productos.Count,
                     productos = productos.Take(3),
                     source = productos.Any() ? "Stock API" : "Datos de prueba"
@@ -44,7 +44,7 @@ namespace ComprasAPI.Controllers
             {
                 return StatusCode(500, new
                 {
-                    error = "❌ Error con Stock Service",
+                    error = " Error con Stock Service",
                     details = ex.Message,
                     source = "Fallback a datos de prueba"
                 });
@@ -56,7 +56,7 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation("🧪 Probando creación de reserva...");
+                _logger.LogInformation(" Probando creación de reserva...");
 
                 var reservaInput = new ReservaInput
                 {
@@ -73,7 +73,7 @@ namespace ComprasAPI.Controllers
 
                 return Ok(new
                 {
-                    message = "✅ Creación de reserva funcionando",
+                    message = " Creación de reserva funcionando",
                     reservaInput = reservaInput,
                     resultado = resultado,
                     source = resultado.IdReserva > 0 ? "Stock API" : "Datos de prueba"
@@ -83,7 +83,7 @@ namespace ComprasAPI.Controllers
             {
                 return StatusCode(500, new
                 {
-                    error = "❌ Error creando reserva",
+                    error = " Error creando reserva",
                     details = ex.Message,
                     source = "Fallback a datos de prueba"
                 });
@@ -95,13 +95,13 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation("🧪 Probando métodos de transporte...");
+                _logger.LogInformation(" Probando métodos de transporte...");
 
                 var metodos = await _logisticaService.ObtenerMetodosTransporteAsync();
 
                 return Ok(new
                 {
-                    message = "✅ Logística Service funcionando",
+                    message = " Logística Service funcionando",
                     metodosCount = metodos.Count,
                     metodos = metodos,
                     source = metodos.Any() ? "Logística API" : "Datos de prueba"
@@ -111,7 +111,7 @@ namespace ComprasAPI.Controllers
             {
                 return StatusCode(500, new
                 {
-                    error = "❌ Error con Logística Service",
+                    error = " Error con Logística Service",
                     details = ex.Message,
                     source = "Fallback a datos de prueba"
                 });
@@ -123,7 +123,7 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation("🧪 Probando cálculo de envío...");
+                _logger.LogInformation(" Probando cálculo de envío...");
 
                 var request = new ShippingCostRequest
                 {
@@ -146,7 +146,7 @@ namespace ComprasAPI.Controllers
 
                 return Ok(new
                 {
-                    message = "✅ Cálculo de envío funcionando",
+                    message = " Cálculo de envío funcionando",
                     request = request,
                     resultado = resultado,
                     source = resultado.TotalCost > 0 ? "Logística API" : "Datos de prueba"
@@ -156,7 +156,7 @@ namespace ComprasAPI.Controllers
             {
                 return StatusCode(500, new
                 {
-                    error = "❌ Error calculando envío",
+                    error = " Error calculando envío",
                     details = ex.Message,
                     source = "Fallback a datos de prueba"
                 });
@@ -169,7 +169,7 @@ namespace ComprasAPI.Controllers
             var status = new
             {
                 Timestamp = DateTime.UtcNow,
-                ComprasAPI = "✅ Running",
+                ComprasAPI = " Running",
                 StockService = await TestStockInternal(),
                 LogisticaService = await TestLogisticaInternal(),
                 NextSteps = new[]
@@ -189,11 +189,11 @@ namespace ComprasAPI.Controllers
             try
             {
                 var productos = await _stockService.GetAllProductsAsync();
-                return productos.Any() ? "✅ Con datos" : "⚠️ Sin datos (usando fallback)";
+                return productos.Any() ? " Con datos" : " Sin datos (usando fallback)";
             }
             catch
             {
-                return "❌ Error (usando fallback)";
+                return " Error (usando fallback)";
             }
         }
 
@@ -202,11 +202,11 @@ namespace ComprasAPI.Controllers
             try
             {
                 var metodos = await _logisticaService.ObtenerMetodosTransporteAsync();
-                return metodos.Any() ? "✅ Con datos" : "⚠️ Sin datos (usando fallback)";
+                return metodos.Any() ? " Con datos" : " Sin datos (usando fallback)";
             }
             catch
             {
-                return "❌ Error (usando fallback)";
+                return " Error (usando fallback)";
             }
         }
     }

@@ -20,7 +20,7 @@ namespace ComprasAPI.Services
         {
             try
             {
-                _logger.LogInformation("📦 Calculando costo de envío...");
+                _logger.LogInformation(" Calculando costo de envío...");
 
                 var json = JsonSerializer.Serialize(request);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -36,7 +36,7 @@ namespace ComprasAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "❌ Logística API no disponible - Usando cálculo de prueba");
+                _logger.LogWarning(ex, " Logística API no disponible - Usando cálculo de prueba");
                 return CalcularCostoPrueba(request);
             }
         }
@@ -45,7 +45,7 @@ namespace ComprasAPI.Services
         {
             try
             {
-                _logger.LogInformation("🚚 Creando envío en Logística API...");
+                _logger.LogInformation(" Creando envío en Logística API...");
 
                 var json = JsonSerializer.Serialize(request);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -61,7 +61,7 @@ namespace ComprasAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "❌ Logística API no disponible - Creando envío de prueba");
+                _logger.LogWarning(ex, " Logística API no disponible - Creando envío de prueba");
                 return CrearEnvioPrueba(request);
             }
         }
@@ -70,7 +70,7 @@ namespace ComprasAPI.Services
         {
             try
             {
-                _logger.LogInformation($"📮 Obteniendo seguimiento para envío {shippingId}...");
+                _logger.LogInformation($" Obteniendo seguimiento para envío {shippingId}...");
 
                 var response = await _httpClient.GetAsync($"/shipping/{shippingId}");
                 response.EnsureSuccessStatusCode();
@@ -83,7 +83,7 @@ namespace ComprasAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, $"❌ Error obteniendo seguimiento {shippingId}");
+                _logger.LogWarning(ex, $" Error obteniendo seguimiento {shippingId}");
                 return ObtenerSeguimientoPrueba(shippingId);
             }
         }
@@ -92,7 +92,7 @@ namespace ComprasAPI.Services
         {
             try
             {
-                _logger.LogInformation("🚛 Obteniendo métodos de transporte...");
+                _logger.LogInformation(" Obteniendo métodos de transporte...");
 
                 var response = await _httpClient.GetAsync("/shipping/transport-methods");
                 response.EnsureSuccessStatusCode();
@@ -107,7 +107,7 @@ namespace ComprasAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "❌ Error obteniendo métodos de transporte - Usando datos de prueba");
+                _logger.LogWarning(ex, " Error obteniendo métodos de transporte - Usando datos de prueba");
                 return ObtenerMetodosTransportePrueba();
             }
         }

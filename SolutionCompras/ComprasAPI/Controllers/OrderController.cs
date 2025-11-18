@@ -40,7 +40,7 @@ namespace ComprasAPI.Controllers
 
             try
             {
-                _logger.LogInformation("💰 Iniciando proceso de checkout...");
+                _logger.LogInformation(" Iniciando proceso de checkout...");
 
                 var userId = await GetCurrentUserId();
                 if (userId == null)
@@ -55,10 +55,10 @@ namespace ComprasAPI.Controllers
                 if (cart == null || !cart.Items.Any())
                     return BadRequest(new { error = "Carrito vacío", code = "EMPTY_CART" });
 
-                _logger.LogInformation($"🛒 Carrito obtenido: {cart.Items.Count} productos");
+                _logger.LogInformation($" Carrito obtenido: {cart.Items.Count} productos");
 
                 // 2. ✅ PRIMERO: Crear reserva en Stock API
-                _logger.LogInformation("📦 Creando reserva en Stock API...");
+                _logger.LogInformation(" Creando reserva en Stock API...");
                 var reservaInput = new ReservaInput
                 {
                     IdCompra = Guid.NewGuid().ToString(),
@@ -72,10 +72,10 @@ namespace ComprasAPI.Controllers
 
                 var reserva = await _stockService.CrearReservaAsync(reservaInput);
 
-                // 3. ✅ VALIDAR RESERVA ANTES DE CONTINUAR
+                // 3.  VALIDAR RESERVA ANTES DE CONTINUAR
                 if (reserva == null || reserva.Estado != "confirmado")
                 {
-                    _logger.LogWarning($"❌ Reserva falló. Estado: {reserva?.Estado ?? "null"}");
+                    _logger.LogWarning($" Reserva falló. Estado: {reserva?.Estado ?? "null"}");
 
                     await transaction.RollbackAsync();
                     return BadRequest(new
@@ -86,10 +86,10 @@ namespace ComprasAPI.Controllers
                     });
                 }
 
-                _logger.LogInformation($"✅ Reserva confirmada: {reserva.IdReserva}");
+                _logger.LogInformation($" Reserva confirmada: {reserva.IdReserva}");
 
-                // 4. ✅ SEGUNDO: Calcular costo de envío
-                _logger.LogInformation("🚚 Calculando costo de envío...");
+                // 4.  SEGUNDO: Calcular costo de envío
+                _logger.LogInformation(" Calculando costo de envío...");
                 var shippingCostRequest = new ShippingCostRequest
                 {
                     DeliveryAddress = request.DeliveryAddress,
@@ -101,10 +101,10 @@ namespace ComprasAPI.Controllers
                 };
 
                 var shippingCost = await _logisticaService.CalcularCostoEnvioAsync(shippingCostRequest);
-                _logger.LogInformation($"✅ Costo de envío calculado: {shippingCost.TotalCost} {shippingCost.Currency}");
+                _logger.LogInformation($" Costo de envío calculado: {shippingCost.TotalCost} {shippingCost.Currency}");
 
-                // 5. ✅ TERCERO: Crear envío en Logística
-                _logger.LogInformation("🚛 Creando envío en Logística API...");
+                // 5.  TERCERO: Crear envío en Logística
+                _logger.LogInformation(" Creando envío en Logística API...");
                 var shippingRequest = new CreateShippingRequest
                 {
                     OrderId = 0, // Temporal, se actualizará después
@@ -122,9 +122,9 @@ namespace ComprasAPI.Controllers
 
                 if (shipping == null || shipping.ShippingId <= 0)
                 {
-                    _logger.LogWarning("❌ Envío falló en Logística API");
+                    _logger.LogWarning(" Envío falló en Logística API");
 
-                    // ⚠️ IMPORTANTE: Cancelar la reserva si el envío falla
+                    //  IMPORTANTE: Cancelar la reserva si el envío falla
                     await _stockService.CancelarReservaAsync(reserva.IdReserva, userId.Value);
 
                     await transaction.RollbackAsync();
@@ -135,19 +135,19 @@ namespace ComprasAPI.Controllers
                     });
                 }
 
-                _logger.LogInformation($"✅ Envío creado: {shipping.ShippingId}");
+                _logger.LogInformation($" Envío creado: {shipping.ShippingId}");
 
 
-                // 7. ✅ QUINTO: Vaciar carrito
+                // 7.  QUINTO: Vaciar carrito
                 _context.CartItems.RemoveRange(cart.Items);
                 cart.Items.Clear();
                 cart.Total = 0;
                 await _context.SaveChangesAsync();
 
-                // ✅ CONFIRMAR TRANSACCIÓN
+                //  CONFIRMAR TRANSACCIÓN
                 await transaction.CommitAsync();
 
-                _logger.LogInformation("✅ Checkout completado exitosamente");
+                _logger.LogInformation(" Checkout completado exitosamente");
 
                 return Ok(new CheckoutResponse
                 {
@@ -164,7 +164,7 @@ namespace ComprasAPI.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "❌ Error durante el checkout");
+                _logger.LogError(ex, " Error durante el checkout");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor durante el checkout",
@@ -180,13 +180,13 @@ namespace ComprasAPI.Controllers
         {
             try
             {
-                _logger.LogInformation("🚛 Obteniendo métodos de transporte...");
+                _logger.LogInformation(" Obteniendo métodos de transporte...");
                 var methods = await _logisticaService.ObtenerMetodosTransporteAsync();
                 return Ok(methods);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error obteniendo métodos de transporte");
+                _logger.LogError(ex, " Error obteniendo métodos de transporte");
                 return StatusCode(500, new
                 {
                     error = "Error obteniendo métodos de transporte",
@@ -217,7 +217,7 @@ namespace ComprasAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error obteniendo historial de pedidos");
+                _logger.LogError(ex, " Error obteniendo historial de pedidos");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor",
@@ -255,7 +255,7 @@ namespace ComprasAPI.Controllers
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "⚠️ No se pudo obtener información de seguimiento");
+                        _logger.LogWarning(ex, " No se pudo obtener información de seguimiento");
                     }
                 }
 
@@ -263,7 +263,7 @@ namespace ComprasAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"❌ Error obteniendo detalles del pedido {id}");
+                _logger.LogError(ex, $" Error obteniendo detalles del pedido {id}");
                 return StatusCode(500, new
                 {
                     error = "Error interno del servidor",
@@ -305,7 +305,7 @@ namespace ComprasAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error al obtener userId");
+                _logger.LogError(ex, " Error al obtener userId");
                 return 1; // Fallback para desarrollo
             }
         }

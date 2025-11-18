@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  compras-db:
+    image: mysql:8.0
+    container_name: compras-database
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: DBComprasAPI
+      MYSQL_USER: compras_user
+      MYSQL_PASSWORD: compras_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./Database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - compras-network
+
+  compras-api:
+    build: .
+    container_name: compras-backend
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=compras-db;Database=DBComprasAPI;User=compras_user;Password=compras_password
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+      - "5000:80"
+    depends_on:
+      - compras-db
+    networks:
+      - compras-network
+
+networks:
+  compras-network:
+    driver: bridge

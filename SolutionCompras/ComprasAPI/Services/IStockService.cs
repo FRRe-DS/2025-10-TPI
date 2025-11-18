@@ -8,7 +8,7 @@ namespace ComprasAPI.Services
         Task<List<ProductoStock>> GetAllProductsAsync();
         Task<ProductoStock> GetProductByIdAsync(int id);
 
-        // ✅ AGREGAR ESTOS MÉTODOS NUEVOS
+        // AGREGAR ESTOS MÉTODOS NUEVOS
         Task<ReservaOutput> CrearReservaAsync(ReservaInput reserva);
         Task<ReservaCompleta> ObtenerReservaAsync(int idReserva, int usuarioId);
 
