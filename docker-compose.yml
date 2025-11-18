@@ -6,14 +6,16 @@ services:
     container_name: compras-database
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: DBComprasAPI
+      MYSQL_DATABASE: dbcomprasapi
       MYSQL_USER: compras_user
       MYSQL_PASSWORD: compras_password
+    command: 
+      - --lower-case-table-names=1
     ports:
       - "3307:3306"
     volumes:
       - compras_db_data:/var/lib/mysql
-      - ./Database/init-new.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./Database/init-new.sql:/docker-entrypoint-initdb.d/init-new.sql
     networks:
       - compras-network
     healthcheck:
@@ -25,7 +27,7 @@ services:
     build: .
     container_name: compras-backend
     environment:
-      - ConnectionStrings__DefaultConnection=Server=compras-db;Database=DBComprasAPI;User=compras_user;Password=compras_password
+      - ConnectionStrings__DefaultConnection=Server=compras-db;Database=dbcomprasapi;User=compras_user;Password=compras_password
       - Keycloak__Authority=http://host.docker.internal:8080/realms/ds-2025-realm
       - Keycloak__AdminBaseUrl=http://host.docker.internal:8080
       - Keycloak__Audience=grupo-10
