@@ -1,3 +1,32 @@
+--Crear usuario--
+
+POST 
+
+http://localhost:5000/api/auth/register
+
+    HEADERS: 
+
+    nada.
+
+    BODY:
+
+    raw:JSON
+    
+    {
+    "FirstName":"Lionel",
+    "LastName":"Messi", 
+    "Email": "messi@gmail.com",
+    "Password": "123456",
+    "RepeatPassword": "123456"
+    }
+
+    devuelve:
+
+    {
+    "message": "Usuario registrado correctamente"
+    }
+
+
 --Obtención del token para la autenticación con keycloak--
 
 POST
@@ -13,6 +42,7 @@ http://localhost:8080/realms/ds-2025-realm/protocol/openid-connect/token
     client_id	    grupo-10
     client_secret	66ff9787-4fa5-46b3-b546-4ccbe604d233
     grant_type	    password
+    username        almiron@gmail.com
     password	    123456
 
     HEADERS
