@@ -168,12 +168,20 @@ import { filter } from 'rxjs/operators';
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#productos">
+              <a 
+                class="nav-link"
+                routerLink="/paginaproductos"
+                routerLinkActive="active"
+              >
                 📦 Productos
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#carrito">
+              <a 
+                class="nav-link"
+                routerLink="/carrito"
+                routerLinkActive="active"
+              >
                 🛒 Carrito
               </a>
             </li>

@@ -5,6 +5,8 @@ import { KeycloakCallbackComponent } from './components/keycloak-callback/keyclo
 import { LogoutComponent } from './components/logout/logout';
 import { RegisterComponent } from './components/auth/register/register';
 import { LoginComponent } from './components/login/login';
+import { Paginaproductos } from './components/paginaproductos/paginaproductos';
+import { CarritoComponent } from './components/carrito/carrito';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' }, // 👈 redirige al login
@@ -13,5 +15,7 @@ export const routes: Routes = [
   { path: 'keycloak-callback', component: KeycloakCallbackComponent },
   { path: 'logout', component: LogoutComponent },
   { path: 'register', component: RegisterComponent },
+  { path: 'paginaproductos', component: Paginaproductos},
+  { path: 'carrito', component: CarritoComponent},
   { path: '**', redirectTo: 'login' } // 👈 si no existe la ruta, redirige al login
 ];

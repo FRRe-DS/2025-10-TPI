@@ -1,74 +1,3 @@
-/*
-import { Injectable, inject } from '@angular/core';
-import { KeycloakService } from 'keycloak-angular';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthService {
-  private keycloakService = inject(KeycloakService);
-
-  async isLoggedIn(): Promise<boolean> {
-    try {
-      return await this.keycloakService.isLoggedIn();
-    } catch (error: any) {
-      console.warn('⚠️ Error verificando login:', error);
-      return false;
-    }
-  }
-
-  login(): void {
-    console.log('🔑 Redirigiendo a Keycloak...');
-    
-    // Login MANUAL simple - Keycloak redirigirá automáticamente al callback
-    const redirectUri = encodeURIComponent('http://localhost:4200/keycloak-callback');
-    const loginUrl = `http://localhost:8080/realms/ds-2025-realm/protocol/openid-connect/auth?client_id=grupo-10&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
-    
-    console.log('📍 URL de login:', loginUrl);
-    window.location.href = loginUrl;
-  }
-
-  async logout(): Promise<void> {
-    try {
-      await this.keycloakService.logout();
-    } catch (error: any) {
-      console.error('❌ Error en logout:', error);
-      // Fallback manual
-      window.location.href = 'http://localhost:8080/realms/ds-2025-realm/protocol/openid-connect/logout';
-    }
-  }
-
-  async getToken(): Promise<string> {
-    try {
-      return await this.keycloakService.getToken();
-    } catch (error: any) {
-      console.warn('⚠️ Error obteniendo token:', error);
-      return '';
-    }
-  }
-
-  getUserName(): string {
-    try {
-      return this.keycloakService.getUsername();
-    } catch (error: any) {
-      console.warn('⚠️ Error obteniendo username:', error);
-      return '';
-    }
-  }
-
-  getEmail(): string {
-    try {
-      const user = this.keycloakService.getKeycloakInstance().idTokenParsed;
-      return user?.['email'] || '';
-    } catch (error: any) {
-      console.warn('⚠️ Error obteniendo email:', error);
-      return '';
-    }
-  }
-  
-}
-
-*/
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
@@ -190,21 +119,36 @@ export class AuthService {
     return localStorage.getItem('auth_token') || '';
   }
 
+  
   getUserName(): string {
     const token = this.getToken();
-    if (!token) return 'Usuario';
+    if (!token) return '';
 
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.preferred_username || 
-             payload.name || 
-             payload.given_name || 
-             payload.client_id || 
-             'Usuario';
+      console.log('🧾 Payload del token en getUserName:', payload);
+
+      // probamos varios campos típicos de Keycloak
+      const name =
+        payload.preferred_username ||
+        payload.name ||
+        `${payload.given_name || ''} ${payload.family_name || ''}`.trim() ||
+        payload.email ||
+        payload.client_id ||
+        '';
+
+      return name;
     } catch (error) {
-      return 'Usuario';
+      console.error('❌ Error parseando token en getUserName:', error);
+      return '';
     }
   }
+ 
+  /*
+  getUserName(): string {
+    return 'NOMBRE-DE-PRUEBA';
+  }
+  */
 
   saveManualToken(token: string): void {
     localStorage.setItem('auth_token', token);
