@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-paginaproductos',
+  standalone: true,
   imports: [CommonModule, ProductsListComponent],
   templateUrl: './paginaproductos.html',
   styleUrl: './paginaproductos.css'

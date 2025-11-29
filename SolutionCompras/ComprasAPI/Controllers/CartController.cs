@@ -477,9 +477,9 @@ namespace ComprasAPI.Controllers
             {
                 _logger.LogError(ex, " Error al obtener userId de base de datos local");
 
-                // Fallback: usar userId 1 para desarrollo
-                _logger.LogInformation(" Usando userId 1 como fallback");
-                return 1;
+
+                _logger.LogError("❌ No se pudo obtener userId - sin fallback a modo test");
+                return null;
             }
         }
 
@@ -502,139 +502,9 @@ namespace ComprasAPI.Controllers
             });
         }
 
-        // 🧪 ENDPOINT TEMPORAL SIN AUTENTICACIÓN - PARA DESARROLLO
-        [HttpPost("test")]
-        [AllowAnonymous]
-        public async Task<IActionResult> AddToCartTest([FromBody] AddToCartRequest request)
-        {
-            try
-            {
-                // Usar un userId fijo para testing
-                int testUserId = 1;
 
-                _logger.LogInformation($" TEST - Agregando producto {request.ProductId} al carrito");
 
-                var stockProduct = await _stockService.GetProductByIdAsync(request.ProductId);
-                if (stockProduct == null)
-                    return NotFound(new { error = "Producto no encontrado", code = "PRODUCT_NOT_FOUND" });
 
-                if (stockProduct.StockDisponible < request.Quantity)
-                    return BadRequest(new
-                    {
-                        error = "Stock insuficiente",
-                        code = "INSUFFICIENT_STOCK",
-                        available = stockProduct.StockDisponible
-                    });
-
-                var cart = await _context.Carts
-                    .Include(c => c.Items)
-                    .ThenInclude(i => i.Product)
-                    .FirstOrDefaultAsync(c => c.UserId == testUserId);
-
-                if (cart == null)
-                {
-                    cart = new Cart { UserId = testUserId };
-                    _context.Carts.Add(cart);
-                    await _context.SaveChangesAsync();
-                    _logger.LogInformation($" Carrito TEST creado: {cart.Id}");
-                }
-
-                var localProduct = await _context.Products
-                    .FirstOrDefaultAsync(p => p.Id == request.ProductId);
-
-                if (localProduct == null)
-                {
-                    localProduct = new Product
-                    {
-                        Id = stockProduct.Id,
-                        Name = stockProduct.Nombre,
-                        Description = stockProduct.Descripcion,
-                        Price = stockProduct.Precio,
-                        Stock = stockProduct.StockDisponible,
-                        Category = stockProduct.Categorias?.FirstOrDefault()?.Nombre ?? "General"
-                    };
-                    _context.Products.Add(localProduct);
-                    await _context.SaveChangesAsync();
-                }
-
-                var existingItem = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
-                if (existingItem != null)
-                {
-                    existingItem.Quantity += request.Quantity;
-                }
-                else
-                {
-                    var cartItem = new CartItem
-                    {
-                        CartId = cart.Id,
-                        ProductId = request.ProductId,
-                        Quantity = request.Quantity,
-                        Product = localProduct
-                    };
-                    cart.Items.Add(cartItem);
-                }
-
-                cart.Total = cart.Items.Sum(item => item.Product.Price * item.Quantity);
-                await _context.SaveChangesAsync();
-
-                return Ok(new
-                {
-                    message = " Producto agregado al carrito (MODO TEST)",
-                    cartId = cart.Id,
-                    total = cart.Total,
-                    itemsCount = cart.Items.Count
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, " Error en carrito test");
-                return StatusCode(500, new
-                {
-                    error = "Error interno del servidor",
-                    code = "INTERNAL_ERROR"
-                });
-            }
-        }
-
-        //  VER CARRITO TEST
-        [HttpGet("test")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetCartTest()
-        {
-            try
-            {
-                int testUserId = 1;
-
-                _logger.LogInformation(" TEST - Obteniendo carrito");
-
-                var cart = await _context.Carts
-                    .Include(c => c.Items)
-                    .ThenInclude(i => i.Product)
-                    .FirstOrDefaultAsync(c => c.UserId == testUserId);
-
-                if (cart == null)
-                {
-                    _logger.LogInformation(" Carrito TEST vacío creado");
-                    cart = new Cart { UserId = testUserId, Items = new List<CartItem>() };
-                    return Ok(cart);
-                }
-
-                cart.Total = cart.Items.Sum(item => item.Product.Price * item.Quantity);
-                _logger.LogInformation($" Carrito TEST obtenido: {cart.Items.Count} items, Total: {cart.Total}");
-
-                return Ok(cart);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, " Error al obtener carrito test");
-                return StatusCode(500, new
-                {
-                    error = "Error interno del servidor",
-                    code = "INTERNAL_ERROR"
-                });
-            }
-        }
-    }
 
     // Modelos para las requests
     public class AddToCartRequest
@@ -648,4 +518,5 @@ namespace ComprasAPI.Controllers
         public int ProductId { get; set; }
         public int Quantity { get; set; }
     }
+}
 }

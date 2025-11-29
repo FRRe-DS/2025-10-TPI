@@ -258,7 +258,7 @@ export class HeaderComponent implements OnInit {
       });
 
     // Verificar cada 3 segundos
-    setInterval(() => this.checkAuthStatus(), 3000);
+    setInterval(() => this.checkAuthStatus(), 30000);
   }
 
   checkAuthStatus() {
