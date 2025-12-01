@@ -54,6 +54,15 @@
       <div class="text-end">
         <h4>Total: ${{ getCartTotal() }}</h4>
       </div>
+
+      <div class="text-end">
+        <button 
+          class="btn btn-primary btn-lg" 
+          [routerLink]="['/checkout']"
+          [disabled]="cart.length === 0">
+          🛒 Finalizar Compra
+        </button>
+      </div>
     </div>
   </div>
 

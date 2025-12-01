@@ -7,6 +7,7 @@ import { RegisterComponent } from './components/auth/register/register';
 import { LoginComponent } from './components/login/login';
 import { Paginaproductos } from './components/paginaproductos/paginaproductos';
 import { CarritoComponent } from './components/carrito/carrito';
+import { CheckoutComponent } from './components/checkout/checkout';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' }, // 👈 redirige al login
@@ -17,5 +18,6 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'paginaproductos', component: Paginaproductos},
   { path: 'carrito', component: CarritoComponent},
+  { path: 'checkout', component: CheckoutComponent },
   { path: '**', redirectTo: 'login' } // 👈 si no existe la ruta, redirige al login
 ];
