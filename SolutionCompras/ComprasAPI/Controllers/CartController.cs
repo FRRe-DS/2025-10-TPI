@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace ComprasAPI.Controllers
 {
@@ -16,12 +17,14 @@ namespace ComprasAPI.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IStockService _stockService;
         private readonly ILogger<CartController> _logger;
+        private readonly ILogisticaService _logisticaService;
 
-        public CartController(ApplicationDbContext context, IStockService stockService, ILogger<CartController> logger)
+        public CartController(ApplicationDbContext context, IStockService stockService, ILogger<CartController> logger, ILogisticaService logisticaService)
         {
             _context = context;
             _stockService = stockService;
             _logger = logger;
+            _logisticaService = logisticaService;
         }
 
         // GET: api/shopcart
@@ -634,18 +637,170 @@ namespace ComprasAPI.Controllers
                 });
             }
         }
+
+        // EN CartController.cs - VERSIÓN CORREGIDA:
+
+        [HttpPost("checkout")]
+        [Authorize]
+        public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request)
+        {
+            try
+            {
+                _logger.LogInformation("🛒 Procesando checkout...");
+
+                var userId = await GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new { error = "No autorizado", code = "UNAUTHORIZED" });
+                }
+
+                // 1. Obtener carrito
+                var cart = await _context.Carts
+                    .Include(c => c.Items)
+                    .ThenInclude(i => i.Product)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
+
+                if (cart == null || !cart.Items.Any())
+                {
+                    return BadRequest(new { message = "El carrito está vacío" });
+                }
+
+                _logger.LogInformation($"📦 Carrito: {cart.Items.Count} items, Total: {cart.Total}");
+
+                ReservaOutput reservaOutput = null;
+                CreateShippingResponse envioOutput = null;
+
+                try
+                {
+                    // 2. CREAR RESERVA EN STOCK API
+                    var reservaInput = new ReservaInput
+                    {
+                        IdCompra = $"COMPRA-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                        UsuarioId = userId.Value,
+                        Productos = cart.Items.Select(item => new ProductoReserva
+                        {
+                            IdProducto = item.ProductId,
+                            Cantidad = item.Quantity
+                        }).ToList()
+                    };
+
+                    reservaOutput = await _stockService.CrearReservaAsync(reservaInput);
+                    _logger.LogInformation($"✅ Reserva creada en Stock API: {reservaOutput.IdReserva}");
+
+                    // 3. CREAR ENVÍO EN LOGÍSTICA API
+                    var deliveryAddressForApi = new DeliveryAddress
+                    {
+                        Street = request.DeliveryAddress.Street,
+                        Number = ExtractNumberFromStreet(request.DeliveryAddress.Street),
+                        PostalCode = request.DeliveryAddress.PostalCode,
+                        LocalityName = request.DeliveryAddress.City
+                    };
+
+                    var envioInput = new CreateShippingRequest
+                    {
+                        OrderId = reservaOutput.IdReserva,
+                        UserId = userId.Value,
+                        DeliveryAddress = deliveryAddressForApi,
+                        TransportType = request.TransportType ?? "truck",
+                        Products = cart.Items.Select(item => new ShippingProduct
+                        {
+                            Id = item.ProductId,
+                            Quantity = item.Quantity
+                        }).ToList()
+                    };
+
+                    envioOutput = await _logisticaService.CrearEnvioAsync(envioInput);
+                    _logger.LogInformation($"✅ Envío creado en Logística API: {envioOutput.ShippingId}");
+
+                    // 4. Limpiar carrito
+                    await ClearCartInternal(userId.Value);
+                    _logger.LogInformation("🛒 Carrito limpiado");
+
+                    // 5. Retornar respuesta exitosa - VERSIÓN CORREGIDA
+                    var response = new
+                    {
+                        reservaId = reservaOutput.IdReserva,
+                        shippingId = envioOutput.ShippingId,
+                        shippingCost = envioOutput.ShippingCost,
+                        estimatedDelivery = envioOutput.EstimatedDeliveryAt,
+                        message = "✅ Checkout completado exitosamente",
+                        reservaStatus = reservaOutput.Estado
+                    };
+
+                    return Ok(response);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "❌ Error durante el checkout - Ejecutando rollback...");
+
+                    // Rollback en caso de error
+                    if (reservaOutput != null)
+                    {
+                        try
+                        {
+                            await _stockService.CancelarReservaAsync(reservaOutput.IdReserva, "Falla en creación de envío con Logística API");
+                            _logger.LogInformation($"✅ Reserva {reservaOutput.IdReserva} cancelada por rollback");
+                        }
+                        catch (Exception rollbackEx)
+                        {
+                            _logger.LogError(rollbackEx, $"⚠️ Error cancelando reserva {reservaOutput.IdReserva}");
+                        }
+                    }
+
+                    return StatusCode(500, new { message = $"Error durante el checkout: {ex.Message}" });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "💥 Error crítico en el proceso de checkout");
+                return StatusCode(500, new { message = "Error interno del servidor" });
+            }
+        }
+
+        private async Task ClearCartInternal(int userId)
+        {
+            var cart = await _context.Carts
+                .Include(c => c.Items)
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (cart != null && cart.Items.Any())
+            {
+                _context.CartItems.RemoveRange(cart.Items);
+                cart.Items.Clear();
+                cart.Total = 0;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // Modelos para las requests
+        public class AddToCartRequest
+        {
+            public int ProductId { get; set; }
+            public int Quantity { get; set; }
+        }
+
+        public class UpdateCartRequest
+        {
+            public int ProductId { get; set; }
+            public int Quantity { get; set; }
+        }
+
+        // 🔥 AGREGAR ESTO AL FINAL DE CartController.cs (antes de la última llave)
+
+        // Método helper para extraer número de la calle
+        private int ExtractNumberFromStreet(string street)
+        {
+            if (string.IsNullOrEmpty(street)) return 0;
+
+            // Ejemplo: "Junin 377" → extrae 377
+            var parts = street.Split(' ');
+            foreach (var part in parts.Reverse())
+            {
+                if (int.TryParse(part, out int number))
+                    return number;
+            }
+            return 0;
+        }
     }
 
-    // Modelos para las requests
-    public class AddToCartRequest
-    {
-        public int ProductId { get; set; }
-        public int Quantity { get; set; }
-    }
-
-    public class UpdateCartRequest
-    {
-        public int ProductId { get; set; }
-        public int Quantity { get; set; }
-    }
 }

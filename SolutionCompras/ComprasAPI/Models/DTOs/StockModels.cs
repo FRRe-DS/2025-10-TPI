@@ -1,4 +1,6 @@
-﻿namespace ComprasAPI.Models.DTOs
+﻿using System.Text.Json.Serialization;
+
+namespace ComprasAPI.Models.DTOs
 {
     public class ProductoStock
     {
@@ -65,13 +67,25 @@
     }
 
     // Response de reserva
+    // Response de reserva
     public class ReservaOutput
     {
+        [JsonPropertyName("id")]  // ← AGREGAR ESTO
         public int IdReserva { get; set; }
+
+        [JsonPropertyName("idCompra")]  // ← AGREGAR ESTO
         public string IdCompra { get; set; }
+
+        [JsonPropertyName("usuarioId")]  // ← AGREGAR ESTO
         public int UsuarioId { get; set; }
+
+        [JsonPropertyName("estado")]  // ← AGREGAR ESTO
         public string Estado { get; set; }
+
+        [JsonPropertyName("expiresAt")]  // ← AGREGAR ESTO
         public string ExpiresAt { get; set; }
+
+        [JsonPropertyName("fechaCreacion")]  // ← AGREGAR ESTO
         public string FechaCreacion { get; set; }
     }
 

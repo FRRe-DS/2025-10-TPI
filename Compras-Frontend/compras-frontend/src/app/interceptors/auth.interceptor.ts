@@ -35,7 +35,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 */
 // auth.interceptor.ts
-import { HttpInterceptorFn } from '@angular/common/http';
+/*import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth';
 
@@ -59,5 +59,37 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     }
   }
 
+  return next(req);
+};*/
+
+
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { AuthService } from '../services/auth';
+import { tap } from 'rxjs/operators';
+
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+
+  // Solo agregar token a requests a tu API
+  if (req.url.includes('localhost:7248')) {
+    const token = authService.getToken();
+    
+    if (token) {
+      console.log('🛡️ INTERCEPTOR - Añadiendo token a:', req.method, req.url);
+      const authReq = req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      return next(authReq).pipe(
+        tap(() => console.log('✅ INTERCEPTOR - Request completada:', req.url))
+      );
+    } else {
+      console.warn('⚠️ INTERCEPTOR - No hay token disponible');
+    }
+  }
+
+  console.log('🛡️ INTERCEPTOR - Pasando request sin modificar:', req.url);
   return next(req);
 };
