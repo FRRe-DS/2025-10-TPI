@@ -106,34 +106,35 @@ namespace ComprasAPI.Controllers
         [Authorize]
         public async Task<IActionResult> AddToCart([FromBody] AddToCartRequest request)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             try
             {
-                _logger.LogInformation("Iniciando AddToCart...");
+                _logger.LogInformation("🔒 INICIANDO AddToCart CON TRANSACCIÓN...");
+                _logger.LogInformation($"📦 Producto: {request.ProductId}, Cantidad: {request.Quantity}");
 
                 var userId = await GetCurrentUserId();
                 _logger.LogInformation($"UserId obtenido: {userId}");
 
                 if (userId == null)
                 {
-                    _logger.LogWarning("UserId es null - Usuario no autorizado o no encontrado en BD local");
+                    await transaction.RollbackAsync();
                     return Unauthorized(new { error = "No autorizado", code = "UNAUTHORIZED" });
                 }
 
-                _logger.LogInformation($"Usuario autenticado: {userId}");
-
-                // 1. Verificar que el producto existe en Stock API
+                // 1. Verificar producto en Stock API
                 _logger.LogInformation($"Verificando producto {request.ProductId} en Stock API...");
                 var stockProduct = await _stockService.GetProductByIdAsync(request.ProductId);
                 if (stockProduct == null)
                 {
-                    _logger.LogWarning($"Producto {request.ProductId} no encontrado en Stock API");
+                    await transaction.RollbackAsync();
                     return NotFound(new { error = "Producto no encontrado", code = "PRODUCT_NOT_FOUND" });
                 }
 
-                // 2. Verificar stock disponible
+                // 2. Verificar stock
                 if (stockProduct.StockDisponible < request.Quantity)
                 {
-                    _logger.LogWarning($"Stock insuficiente. Solicitado: {request.Quantity}, Disponible: {stockProduct.StockDisponible}");
+                    await transaction.RollbackAsync();
                     return BadRequest(new
                     {
                         error = "Stock insuficiente",
@@ -142,73 +143,113 @@ namespace ComprasAPI.Controllers
                     });
                 }
 
-                _logger.LogInformation($"Stock disponible: {stockProduct.StockDisponible}");
-
-                // 3. Obtener o crear carrito
+                // 3. Obtener carrito CON RECARGA EXPLÍCITA
                 var cart = await _context.Carts
                     .Include(c => c.Items)
-                    .ThenInclude(i => i.Product)
                     .FirstOrDefaultAsync(c => c.UserId == userId);
+
+                // 🔍 DEBUG: Verificar qué items tiene el carrito
+                _logger.LogInformation($"🔍 Carrito ID: {cart?.Id}, Items count: {cart?.Items?.Count}");
+                if (cart?.Items != null)
+                {
+                    foreach (var item in cart.Items)
+                    {
+                        _logger.LogInformation($"🔍 Item ID: {item.Id}, ProductId: {item.ProductId}, Quantity: {item.Quantity}");
+                    }
+                }
 
                 if (cart == null)
                 {
                     cart = new Cart { UserId = userId.Value };
                     _context.Carts.Add(cart);
-                    await _context.SaveChangesAsync(); // Guardar para obtener ID
-                    _logger.LogInformation($" Carrito creado: {cart.Id}");
-                }
-                else
-                {
-                    _logger.LogInformation($" Carrito existente: {cart.Id} con {cart.Items.Count} items");
-                }
-
-                // 4. Buscar o crear producto local (snapshot)
-                var localProduct = await _context.Products
-                    .FirstOrDefaultAsync(p => p.Id == request.ProductId);
-
-                if (localProduct == null)
-                {
-                    // Crear snapshot del producto en nuestra base local
-                    localProduct = new Product
-                    {
-                        Id = stockProduct.Id,
-                        Name = stockProduct.Nombre,
-                        Description = stockProduct.Descripcion,
-                        Price = stockProduct.Precio,
-                        Stock = stockProduct.StockDisponible,
-                        Category = stockProduct.Categorias?.FirstOrDefault()?.Nombre ?? "General"
-                    };
-                    _context.Products.Add(localProduct);
                     await _context.SaveChangesAsync();
-                    _logger.LogInformation($" Producto local creado: {localProduct.Name} (ID: {localProduct.Id})");
+                    _logger.LogInformation($"🆕 Carrito creado: {cart.Id}");
                 }
 
-                // 5. Agregar o actualizar item en carrito
-                var existingItem = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
+                // 4. BUSCAR ITEM EXISTENTE - MÁS ROBUSTO
+                CartItem existingItem = null;
+                if (cart.Items != null)
+                {
+                    existingItem = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
+                }
+
+                _logger.LogInformation($"🔍 ExistingItem encontrado: {existingItem != null}");
                 if (existingItem != null)
                 {
-                    existingItem.Quantity += request.Quantity;
-                    _logger.LogInformation($" Producto actualizado: {existingItem.Product.Name} - Cantidad: {existingItem.Quantity}");
+                    _logger.LogInformation($"🔍 ExistingItem details - ID: {existingItem.Id}, ProductId: {existingItem.ProductId}, Quantity: {existingItem.Quantity}");
+                }
+
+                // 5. AGREGAR O ACTUALIZAR ITEM
+                if (existingItem != null)
+                {
+                    // ✅ ACTUALIZAR ITEM EXISTENTE
+                    var newQuantity = existingItem.Quantity + request.Quantity;
+
+                    if (newQuantity > stockProduct.StockDisponible)
+                    {
+                        await transaction.RollbackAsync();
+                        return BadRequest(new
+                        {
+                            error = "Stock insuficiente",
+                            code = "INSUFFICIENT_STOCK",
+                            available = stockProduct.StockDisponible
+                        });
+                    }
+
+                    existingItem.Quantity = newQuantity;
+                    _logger.LogInformation($"✅ ITEM ACTUALIZADO - ID: {existingItem.Id}, Nueva cantidad: {newQuantity}");
                 }
                 else
                 {
-                    var cartItem = new CartItem
+                    // ✅ CREAR NUEVO ITEM (SOLO SI NO EXISTE)
+                    // Primero buscar/crear producto local
+                    var localProduct = await _context.Products
+                        .FirstOrDefaultAsync(p => p.Id == request.ProductId);
+
+                    if (localProduct == null)
+                    {
+                        localProduct = new Product
+                        {
+                            Id = stockProduct.Id,
+                            Name = stockProduct.Nombre,
+                            Description = stockProduct.Descripcion,
+                            Price = stockProduct.Precio,
+                            Stock = stockProduct.StockDisponible,
+                            Category = stockProduct.Categorias?.FirstOrDefault()?.Nombre ?? "General"
+                        };
+                        _context.Products.Add(localProduct);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    var newCartItem = new CartItem
                     {
                         CartId = cart.Id,
                         ProductId = request.ProductId,
                         Quantity = request.Quantity,
                         Product = localProduct
                     };
-                    cart.Items.Add(cartItem);
-                    _logger.LogInformation($" Producto agregado: {localProduct.Name} - Cantidad: {request.Quantity}");
+
+                    // Asegurar que la colección Items esté inicializada
+                    if (cart.Items == null)
+                    {
+                        cart.Items = new List<CartItem>();
+                    }
+
+                    cart.Items.Add(newCartItem);
+                    _logger.LogInformation($"🆕 NUEVO ITEM CREADO - ProductId: {request.ProductId}, Quantity: {request.Quantity}");
                 }
 
-                // 6. Actualizar total del carrito
-                cart.Total = cart.Items.Sum(item => item.Product.Price * item.Quantity);
+                // 6. Actualizar total
+                cart.Total = cart.Items.Sum(item =>
+                {
+                    var product = item.Product ?? _context.Products.FirstOrDefault(p => p.Id == item.ProductId);
+                    return product?.Price * item.Quantity ?? 0;
+                });
 
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
 
-                _logger.LogInformation($" Carrito guardado. Total: {cart.Total}, Items: {cart.Items.Count}");
+                _logger.LogInformation($"🎯 TRANSACCIÓN EXITOSA - Carrito ID: {cart.Id}, Total Items: {cart.Items.Count}");
 
                 return Ok(new
                 {
@@ -220,21 +261,15 @@ namespace ComprasAPI.Controllers
             }
             catch (System.Net.Http.HttpRequestException ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, " Error al conectar con Stock API");
-                return StatusCode(502, new
-                {
-                    error = "Servicio Stock no disponible",
-                    code = "STOCK_SERVICE_UNAVAILABLE"
-                });
+                return StatusCode(502, new { error = "Servicio Stock no disponible", code = "STOCK_SERVICE_UNAVAILABLE" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, " Error al agregar producto al carrito");
-                return StatusCode(500, new
-                {
-                    error = "Error interno del servidor",
-                    code = "INTERNAL_ERROR"
-                });
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "💥 Error en AddToCart");
+                return StatusCode(500, new { error = "Error interno del servidor", code = "INTERNAL_ERROR" });
             }
         }
 

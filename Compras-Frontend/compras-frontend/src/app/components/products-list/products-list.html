@@ -1,10 +1,11 @@
+<!--
 <div style="background: red; color: white; padding: 10px; margin: 10px;">
   <h3>🚨 DEBUG ZONE - ProductsListComponent</h3>
   <button (click)="testDebug()" class="btn btn-warning">
     Probar Debug Directo
   </button>
   <p>Productos cargados: {{ filteredProducts.length }}</p>
-</div>
+</div>-->
 
 <!-- Barra de búsqueda -->
 <div class="row mb-4">
@@ -88,8 +89,16 @@
               <button
                 class="btn btn-success w-100"
                 (click)="addToCart(product)"
-                [disabled]="product.stockDisponible === 0">
-                {{product.stockDisponible === 0 ? 'SIN STOCK' : '🛒 Agregar al Carrito'}}
+                [disabled]="product.stockDisponible === 0 || isAddingToCart">
+                
+                <span *ngIf="isAddingToCart" class="d-flex align-items-center justify-content-center">
+                  <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Agregando...
+                </span>
+                
+                <span *ngIf="!isAddingToCart">
+                  {{product.stockDisponible === 0 ? 'SIN STOCK' : '🛒 Agregar al Carrito'}}
+                </span>
               </button>
             </div>
           </div>

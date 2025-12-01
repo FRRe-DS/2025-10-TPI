@@ -1,3 +1,4 @@
+// cartservice.ts - SOLUCIÓN NUCLEAR
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api';
 
@@ -8,19 +9,30 @@ export class CartService {
   private apiService = inject(ApiService);
   private cart: any[] = [];
   
-  // 🔒 PROTECCIÓN CONTRA DUPLICADOS
-  private isAddingToBackend = false;
-  private pendingRequests = new Map<number, boolean>(); // productId -> en progreso
+  // 🔒 PROTECCIÓN NUCLEAR
+  private isAddingToCart = false;
+  private pendingRequest: any = null;
+  private requestTimeout: any = null;
 
   getItems() {
     return this.cart;
   }
 
   addToCart(product: any) {
-    console.log('🛒 addToCart ejecutado - Producto:', product.nombre, 'ID:', product.id);
+    console.log('🛒 addToCart INICIADO - Producto:', product.nombre, 'ID:', product.id);
     
+    // 🔒 BLOQUEO ABSOLUTO - Solo una operación a la vez
+    if (this.isAddingToCart) {
+      console.log('🚫 BLOQUEO NUCLEAR - Operación en progreso, IGNORANDO');
+      return;
+    }
+
+    this.isAddingToCart = true;
+    console.log('🔒 BLOQUEO ACTIVADO - Iniciando proceso...');
+
     if (product.stockDisponible <= 0) {
       alert('Producto sin stock disponible');
+      this.unlock();
       return;
     }
 
@@ -29,6 +41,7 @@ export class CartService {
     if (existingItem) {
       if (existingItem.quantity >= product.stockDisponible) {
         alert('No hay suficiente stock disponible');
+        this.unlock();
         return;
       }
       existingItem.quantity++;
@@ -41,46 +54,60 @@ export class CartService {
       console.log('📦 Nuevo producto agregado al carrito local');
     }
 
-    // 2. Sincronizar con backend CON PROTECCIÓN
-    this.addToBackendCart(product.id, 1);
+    // 2. CANCELAR CUALQUIER REQUEST PENDIENTE
+    if (this.pendingRequest) {
+      console.log('🛑 Cancelando request pendiente anterior');
+      this.pendingRequest.unsubscribe();
+      this.pendingRequest = null;
+    }
+
+    // 3. SOLO UNA llamada al backend
+    this.addToBackendCartNuclear(product.id, 1);
 
     alert('✅ ' + product.nombre + ' agregado al carrito');
   }
 
-  addToBackendCart(productId: number, quantity: number) {
-    // 🔒 EVITAR MÚLTIPLES LLAMADAS PARA EL MISMO PRODUCTO
-    if (this.pendingRequests.has(productId)) {
-      console.log('⏳ Llamada para producto', productId, 'ya en progreso, ignorando...');
-      return;
-    }
-
-    // 🔒 BLOQUEAR LLAMADAS SIMULTÁNEAS
-    if (this.isAddingToBackend) {
-      console.log('🚫 Ya hay una operación en progreso, ignorando...');
-      return;
-    }
-
-    this.pendingRequests.set(productId, true);
-    this.isAddingToBackend = true;
-
-    console.log('📡 Haciendo POST a /api/shopcart - Producto:', productId, 'Cantidad:', quantity);
+  addToBackendCartNuclear(productId: number, quantity: number) {
+    console.log('🚀 INICIANDO LLAMADA HTTP ÚNICA - Producto:', productId);
     
-    this.apiService.addToCart(productId, quantity).subscribe({
+    // 🔒 TIMEOUT DE SEGURIDAD
+    this.requestTimeout = setTimeout(() => {
+      console.log('⏰ TIMEOUT DE SEGURIDAD - Liberando bloqueo');
+      this.unlock();
+    }, 10000);
+
+    // 🔒 GUARDAR LA SUSCRIPCIÓN PARA PODER CANCELARLA
+    this.pendingRequest = this.apiService.addToCart(productId, quantity).subscribe({
       next: (response) => {
-        console.log('✅ Producto agregado al carrito del backend:', response);
+        console.log('✅ LLAMADA HTTP COMPLETADA EXITOSAMENTE');
+        this.clearTimeout();
+        this.unlock();
       },
       error: (error) => {
-        console.warn('⚠️ Error al agregar al carrito del backend:', error.message);
-        // No mostrar alerta para no molestar al usuario
+        console.warn('⚠️ ERROR HTTP:', error.message);
+        this.clearTimeout();
+        this.unlock();
       },
       complete: () => {
-        console.log('🎯 Llamada al backend completada para producto:', productId);
-        // 🔓 LIBERAR BLOQUEOS
-        this.pendingRequests.delete(productId);
-        this.isAddingToBackend = false;
+        console.log('🎯 HTTP COMPLETE');
+        this.clearTimeout();
       }
     });
   }
+
+  private clearTimeout() {
+    if (this.requestTimeout) {
+      clearTimeout(this.requestTimeout);
+      this.requestTimeout = null;
+    }
+  }
+
+  private unlock() {
+    this.isAddingToCart = false;
+    this.pendingRequest = null;
+    console.log('🔓 BLOQUEO LIBERADO - Listo para nueva operación');
+  }
+
 
   // ... los otros métodos permanecen igual
   validateQuantity(item: any) {

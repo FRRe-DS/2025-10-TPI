@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../services/auth';
-import { Observable, from, switchMap } from 'rxjs';
+import { Observable, from, switchMap ,throwError} from 'rxjs';
+import { take, tap, catchError, finalize } from 'rxjs/operators'; // 👈 IMPORTAR OPERADORES
 
 @Injectable({
   providedIn: 'root'
@@ -55,11 +56,41 @@ export class ApiService {
     return this.authenticatedRequest('/shopcart');
   }
 
-  addToCart(productId: number, quantity: number): Observable<any> {
+  /*addToCart(productId: number, quantity: number): Observable<any> {
     return this.authenticatedRequest('/shopcart', 'POST', {
       productId,
       quantity
     });
+  }*/
+
+  addToCart(productId: number, quantity: number): Observable<any> {
+  console.log('🚀 API SERVICE - Iniciando addToCart');
+  
+    return from(this.authService.getToken()).pipe(
+      take(1), // 👈 AÑADIR ESTO - toma solo un valor
+      switchMap(token => {
+        console.log('🔑 API SERVICE - Token obtenido, haciendo request');
+        
+        const options = {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        };
+
+        const fullUrl = `${this.apiUrl}/shopcart`;
+        console.log('📡 API SERVICE - URL:', fullUrl);
+
+        return this.http.post(fullUrl, { productId, quantity }, options).pipe(
+          tap(response => console.log('✅ API SERVICE - Response recibida')),
+          catchError(error => {
+            console.error('❌ API SERVICE - Error:', error);
+            return throwError(() => error);
+          })
+        );
+      }),
+      finalize(() => console.log('🏁 API SERVICE - addToCart finalizado'))
+    );
   }
 
   updateCartItem(productId: number, quantity: number): Observable<any> {

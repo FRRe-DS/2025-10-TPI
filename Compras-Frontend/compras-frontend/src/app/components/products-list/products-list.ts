@@ -2,7 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api';
-import { CartService } from '../../services/cartservice';
+//import { CartService } from '../../services/cartservice';
+import { CartServiceFixed } from '../../services/cartservice-fixed';
 
 @Component({
   selector: 'app-products-list',
@@ -13,14 +14,18 @@ import { CartService } from '../../services/cartservice';
 })
 export class ProductsListComponent implements OnInit {
   private apiService = inject(ApiService);
-  private cartService = inject(CartService);
+  private cartService = inject(CartServiceFixed);
   private clickCounter: number = 0;
-  private isAddingToCart = false;
 
   searchTerm: string = '';
   products: any[] = [];
   filteredProducts: any[] = [];
   loading: boolean = false;
+  
+  // 🔒 CONTROL MEJORADO DE ESTADO DE BOTONES
+  addingProductId: number | null = null;
+  private lastClickTime = 0;
+  public isAddingToCart = false;
 
   constructor() {
     console.log('🎯 ProductsListComponent CONSTRUCTOR ejecutado');
@@ -54,32 +59,54 @@ export class ProductsListComponent implements OnInit {
   }
 
   addToCart(product: any) {
-    // 🔒 EVITAR CLICS MÚLTIPLES RÁPIDOS
+    // 🔒 PROTECCIÓN 1: Debouncing - mínimo 3 segundos entre clics
+    const now = Date.now();
+    if (now - this.lastClickTime < 3000) {
+      console.log('⏳ BLOQUEADO - Espera 3 segundos entre clics');
+      return;
+    }
+    this.lastClickTime = now;
+
+    // 🔒 PROTECCIÓN 2: Evitar múltiples ejecuciones simultáneas
     if (this.isAddingToCart) {
-      console.log('⏳ Ya se está agregando un producto, espera...');
+      console.log('🚫 BLOQUEADO - Ya hay una operación en progreso');
+      return;
+    }
+
+    // 🔒 PROTECCIÓN 3: Evitar clics múltiples en el mismo producto
+    if (this.addingProductId === product.id) {
+      console.log('📋 BLOQUEADO - Este producto ya se está agregando');
       return;
     }
 
     this.isAddingToCart = true;
+    this.addingProductId = product.id;
     
-    console.log('🎯 BOTÓN CLICKEADO - addToCart ejecutado UNA VEZ');
+    console.log('🎯 BOTÓN CLICKEADO - INICIANDO PROCESO...');
     console.log('📦 Producto:', product.nombre, 'ID:', product.id);
     
     if (!product.id) {
       console.error('❌ Producto no tiene ID:', product);
-      this.isAddingToCart = false;
+      this.resetAddState();
       return;
     }
     
+    // Agregar al carrito
     this.cartService.addToCart(product);
-    console.log('✅ Llamada a cartService completada');
+    console.log('✅ Llamada a cartService iniciada');
 
-    // 🔓 LIBERAR DESPUÉS DE UN TIEMPO BREVE
+    // 🔓 LIBERAR después de tiempo suficiente para completar la operación
     setTimeout(() => {
-      this.isAddingToCart = false;
-    }, 1000);
+      this.resetAddState();
+      console.log('🔓 Estado de agregado liberado');
+    }, 5000); // 5 segundos para permitir que la llamada HTTP complete
   }
 
+  // 🔓 MÉTODO PARA RESETEAR EL ESTADO
+  private resetAddState() {
+    this.isAddingToCart = false;
+    this.addingProductId = null;
+  }
 
   testDebug() {
     console.log('🎯 DEBUG BUTTON CLICKEADO - Componente FUNCIONA');
