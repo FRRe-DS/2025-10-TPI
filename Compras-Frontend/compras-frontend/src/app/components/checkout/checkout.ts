@@ -102,42 +102,102 @@ export class CheckoutComponent implements OnInit {
   }
 
   async submitOrder() {
-    if (!this.validateForm()) {
-      return;
-    }
-
-    this.submitting = true;
-    
-    try {
-      const orderData = {
-        deliveryAddress: this.deliveryAddress,
-        transportType: this.transportType
-      };
-
-      console.log('📦 Enviando orden:', orderData);
-      
-      const response = await this.apiService.createOrder(orderData).toPromise();
-      
-      console.log('✅ Orden creada exitosamente:', response);
-      
-      // Mostrar mensaje de éxito
-      alert('🎉 ¡Pedido realizado con éxito!\nTu número de orden es: ' + 
-            (response.orderId || response.id || 'N/A'));
-      
-      // Limpiar carrito después de éxito
-      this.cartService.clearCart();
-      
-      // Redirigir a la página de confirmación o historial
-      this.router.navigate(['/carrito']);
-      
-    } catch (error: any) {
-      console.error('❌ Error creando orden:', error);
-      this.errorMessage = 'Error al procesar el pedido: ' + 
-                         (error.error?.message || error.message || 'Error desconocido');
-    } finally {
-      this.submitting = false;
-    }
+  if (!this.validateForm()) {
+    return;
   }
+
+  this.submitting = true;
+  this.errorMessage = '';
+  
+  try {
+    const orderData = {
+      deliveryAddress: this.deliveryAddress,
+      transportType: this.transportType
+    };
+
+    console.log('📦 Enviando orden:', orderData);
+    
+    // Usar subscribe en lugar de toPromise (mejor práctica en Angular)
+    this.apiService.createOrder(orderData).subscribe({
+      next: (response) => {
+          console.log('✅ Orden creada exitosamente:', response);
+  
+          // Verificar si la respuesta tiene datos
+          if (!response) {
+            throw new Error('La respuesta del servidor está vacía');
+          }
+          
+          // ✅ USAR EL CAMPO CORRECTO DE LA RESPUESTA
+          const orderNumber = response.reservaId || response.shippingId || 'N/A';
+          const shippingCost = response.shippingCost || 0;
+          const estimatedDelivery = response.estimatedDelivery 
+            ? new Date(response.estimatedDelivery).toLocaleDateString('es-AR') 
+            : 'No disponible';
+          
+          // Mostrar mensaje de éxito con más detalles
+          const successMessage = `
+          🎉 ¡Pedido realizado con éxito!
+
+          📦 Número de reserva: ${orderNumber}
+          🚚 Número de envío: ${response.shippingId || 'N/A'}
+          💰 Costo de envío: $${shippingCost}
+          📅 Entrega estimada: ${estimatedDelivery}
+
+        ${response.message || 'Tu pedido ha sido procesado exitosamente.'}
+          `;
+          
+          alert(successMessage);
+          
+          // Limpiar carrito después de éxito
+          this.cartService.clearCart();
+          
+          // Redirigir a la página de confirmación o historial
+          setTimeout(() => {
+            this.router.navigate(['/carrito']);
+          }, 2000);
+          
+          this.submitting = false;
+
+      },
+      error: (error) => {
+        console.error('❌ Error creando orden:', error);
+        this.handleOrderError(error);
+      },
+      complete: () => {
+        console.log('🏁 Llamada completada');
+        this.submitting = false;
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ Error inesperado:', error);
+    this.errorMessage = 'Error inesperado: ' + error.message;
+    this.submitting = false;
+  }
+}
+
+private handleOrderError(error: any) {
+  this.submitting = false;
+  
+  // Intentar extraer mensaje de error del backend
+  let errorMsg = 'Error al procesar el pedido';
+  
+  if (error.status === 0) {
+    errorMsg = 'No se pudo conectar con el servidor. Verifica tu conexión.';
+  } else if (error.status === 400) {
+    errorMsg = 'Datos inválidos: ' + (error.error?.message || 'Revisa la información');
+  } else if (error.status === 401) {
+    errorMsg = 'No estás autenticado. Por favor, inicia sesión nuevamente.';
+  } else if (error.status === 500) {
+    errorMsg = 'Error interno del servidor. Intenta nuevamente más tarde.';
+  } else if (error.error?.message) {
+    errorMsg = error.error.message;
+  } else if (error.message) {
+    errorMsg = error.message;
+  }
+  
+  this.errorMessage = errorMsg;
+}
 
   goBack() {
     this.router.navigate(['/carrito']);

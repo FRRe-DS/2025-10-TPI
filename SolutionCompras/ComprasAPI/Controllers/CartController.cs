@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace ComprasAPI.Controllers
 {
@@ -654,10 +655,10 @@ namespace ComprasAPI.Controllers
                     return Unauthorized(new { error = "No autorizado", code = "UNAUTHORIZED" });
                 }
 
-                // 1. Obtener carrito
+                // 1. Obtener carrito CON productos incluidos
                 var cart = await _context.Carts
                     .Include(c => c.Items)
-                    .ThenInclude(i => i.Product)
+                    .ThenInclude(i => i.Product) // IMPORTANTE: Incluir Product para precio
                     .FirstOrDefaultAsync(c => c.UserId == userId);
 
                 if (cart == null || !cart.Items.Any())
@@ -665,7 +666,11 @@ namespace ComprasAPI.Controllers
                     return BadRequest(new { message = "El carrito está vacío" });
                 }
 
-                _logger.LogInformation($"📦 Carrito: {cart.Items.Count} items, Total: {cart.Total}");
+                // ✅ CALCULAR TOTAL PRODUCTOS ANTES DE CONTINUAR
+                var totalProductos = cart.Items.Sum(item =>
+                    (item.Product?.Price ?? 0) * item.Quantity);
+
+                _logger.LogInformation($"📦 Carrito: {cart.Items.Count} items, Productos: ${totalProductos}");
 
                 ReservaOutput reservaOutput = null;
                 CreateShippingResponse envioOutput = null;
@@ -693,7 +698,7 @@ namespace ComprasAPI.Controllers
                         Street = request.DeliveryAddress.Street,
                         Number = ExtractNumberFromStreet(request.DeliveryAddress.Street),
                         PostalCode = request.DeliveryAddress.PostalCode,
-                        LocalityName = request.DeliveryAddress.City
+                        LocalityName = request.DeliveryAddress.City,
                     };
 
                     var envioInput = new CreateShippingRequest
@@ -701,13 +706,16 @@ namespace ComprasAPI.Controllers
                         OrderId = reservaOutput.IdReserva,
                         UserId = userId.Value,
                         DeliveryAddress = deliveryAddressForApi,
-                        TransportType = request.TransportType ?? "truck",
+                        TransportType = request.TransportType?.ToLower() ?? "truck",
                         Products = cart.Items.Select(item => new ShippingProduct
                         {
                             Id = item.ProductId,
                             Quantity = item.Quantity
                         }).ToList()
                     };
+
+                    _logger.LogInformation($"📦 Creando envío para reserva {reservaOutput.IdReserva}");
+                    _logger.LogInformation($"📍 Dirección: {deliveryAddressForApi.Street}, {deliveryAddressForApi.PostalCode}, {deliveryAddressForApi.LocalityName}");
 
                     envioOutput = await _logisticaService.CrearEnvioAsync(envioInput);
                     _logger.LogInformation($"✅ Envío creado en Logística API: {envioOutput.ShippingId}");
@@ -716,17 +724,61 @@ namespace ComprasAPI.Controllers
                     await ClearCartInternal(userId.Value);
                     _logger.LogInformation("🛒 Carrito limpiado");
 
-                    // 5. Retornar respuesta exitosa - VERSIÓN CORREGIDA
+                    // ✅ 5. CALCULAR COSTOS COMPLETOS
+                    var costoTotal = totalProductos + envioOutput.ShippingCost;
+
+                    _logger.LogInformation($"💰 RESUMEN DE COSTOS:");
+                    _logger.LogInformation($"   Productos: ${totalProductos}");
+                    _logger.LogInformation($"   Envío: ${envioOutput.ShippingCost}");
+                    _logger.LogInformation($"   Total: ${costoTotal}");
+
+                    // ✅ 6. RETORNAR RESPUESTA CON TODOS LOS COSTOS
                     var response = new
                     {
+                        // IDs de referencia
                         reservaId = reservaOutput.IdReserva,
                         shippingId = envioOutput.ShippingId,
-                        shippingCost = envioOutput.ShippingCost,
+
+                        // ✅ SECCIÓN DE COSTOS DESGLOSADOS
+                        costos = new
+                        {
+                            productos = totalProductos,
+                            envio = envioOutput.ShippingCost,
+                            total = costoTotal,
+                            currency = "ARS"
+                        },
+
+                        // Información de entrega
                         estimatedDelivery = envioOutput.EstimatedDeliveryAt,
+                        deliveryAddress = new
+                        {
+                            street = deliveryAddressForApi.Street,
+                            locality = deliveryAddressForApi.LocalityName,
+                            postalCode = deliveryAddressForApi.PostalCode,
+                            number = deliveryAddressForApi.Number
+                        },
+
+                        // Estado
                         message = "✅ Checkout completado exitosamente",
-                        reservaStatus = reservaOutput.Estado
+                        reservaStatus = reservaOutput.Estado,
+                        shippingStatus = "created",
+
+                        // ✅ DETALLE DE PRODUCTOS COMPRADOS
+                        productos = cart.Items.Select(item => new
+                        {
+                            id = item.ProductId,
+                            nombre = item.Product?.Name ?? $"Producto {item.ProductId}",
+                            precioUnitario = item.Product?.Price ?? 0,
+                            cantidad = item.Quantity,
+                            subtotal = (item.Product?.Price ?? 0) * item.Quantity
+                        }).ToList(),
+
+                        // Información de transporte
+                        transportType = request.TransportType?.ToLower() ?? "truck",
+                        fecha = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
                     };
 
+                    _logger.LogInformation($"🎉 Checkout completado: Reserva #{reservaOutput.IdReserva}, Envío #{envioOutput.ShippingId}");
                     return Ok(response);
                 }
                 catch (Exception ex)
@@ -747,14 +799,46 @@ namespace ComprasAPI.Controllers
                         }
                     }
 
-                    return StatusCode(500, new { message = $"Error durante el checkout: {ex.Message}" });
+                    return StatusCode(500, new
+                    {
+                        message = $"Error durante el checkout: {ex.Message}",
+                        details = ex.InnerException?.Message,
+                        productosEnCarrito = totalProductos // Incluir para debug
+                    });
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "💥 Error crítico en el proceso de checkout");
-                return StatusCode(500, new { message = "Error interno del servidor" });
+                return StatusCode(500, new
+                {
+                    message = "Error interno del servidor",
+                    error = ex.Message
+                });
             }
+        }
+
+        // ✅ MÉTODO MEJORADO PARA EXTRAER NÚMERO
+        private int ExtractNumberFromStreet(string street)
+        {
+            if (string.IsNullOrEmpty(street))
+                return 0;
+
+            // Buscar número al final de la cadena (ej: "Av. Siempre Viva 742")
+            var match = Regex.Match(street, @"\d+$");
+            if (match.Success && int.TryParse(match.Value, out int number))
+            {
+                return number <= 9999 ? number : 0;
+            }
+
+            // Si no encuentra al final, buscar cualquier número
+            match = Regex.Match(street, @"\d+");
+            if (match.Success && int.TryParse(match.Value, out number))
+            {
+                return number <= 9999 ? number : 0;
+            }
+
+            return 0;
         }
 
         private async Task ClearCartInternal(int userId)
@@ -788,19 +872,6 @@ namespace ComprasAPI.Controllers
         // 🔥 AGREGAR ESTO AL FINAL DE CartController.cs (antes de la última llave)
 
         // Método helper para extraer número de la calle
-        private int ExtractNumberFromStreet(string street)
-        {
-            if (string.IsNullOrEmpty(street)) return 0;
-
-            // Ejemplo: "Junin 377" → extrae 377
-            var parts = street.Split(' ');
-            foreach (var part in parts.Reverse())
-            {
-                if (int.TryParse(part, out int number))
-                    return number;
-            }
-            return 0;
-        }
     }
 
 }

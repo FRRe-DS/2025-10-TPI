@@ -110,7 +110,33 @@ export class ApiService {
 
   // ========== PEDIDOS ==========
   createOrder(orderData: any): Observable<any> {
-    return this.authenticatedRequest('/shopcart/checkout', 'POST', orderData);
+    console.log('🚀 API SERVICE - Creando orden:', orderData);
+    
+    return from(this.authService.getToken()).pipe(
+      take(1),
+      switchMap(token => {
+        console.log('🔑 API SERVICE - Token obtenido, creando orden');
+        
+        const options = {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        };
+
+        const fullUrl = `${this.apiUrl}/shopcart/checkout`;
+        console.log('📡 API SERVICE - URL:', fullUrl);
+
+        return this.http.post(fullUrl, orderData, options).pipe(
+          tap(response => console.log('✅ API SERVICE - Orden creada:', response)),
+          catchError(error => {
+            console.error('❌ API SERVICE - Error creando orden:', error);
+            return throwError(() => error);
+          })
+        );
+      }),
+      finalize(() => console.log('🏁 API SERVICE - createOrder finalizado'))
+    );
   }
 
   getOrderHistory(): Observable<any[]> {
