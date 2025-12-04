@@ -639,6 +639,100 @@ namespace ComprasAPI.Controllers
             }
         }
 
+        [HttpPost("calculate-shipping")]
+        [Authorize]
+        public async Task<IActionResult> CalculateShipping([FromBody] CalculateShippingRequest request)
+        {
+            try
+            {
+                _logger.LogInformation("💰 Calculando costo de envío...");
+
+                var userId = await GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new { error = "No autorizado", code = "UNAUTHORIZED" });
+                }
+
+                // 1. Obtener carrito del usuario
+                var cart = await _context.Carts
+                    .Include(c => c.Items)
+                    .ThenInclude(i => i.Product)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
+
+                if (cart == null || !cart.Items.Any())
+                {
+                    return BadRequest(new
+                    {
+                        message = "El carrito está vacío",
+                        code = "EMPTY_CART"
+                    });
+                }
+
+                // 2. Crear request para logística
+                var shippingRequest = new ShippingCostRequest
+                {
+                    DeliveryAddress = new Address
+                    {
+                        Street = request.DeliveryAddress.Street,
+                        City = request.DeliveryAddress.City,
+                        State = request.DeliveryAddress.State,
+                        PostalCode = request.DeliveryAddress.PostalCode,
+                        Country = "AR" // Siempre Argentina
+                    },
+                    Products = cart.Items.Select(item => new ProductRequest
+                    {
+                        Id = item.ProductId,
+                        Quantity = item.Quantity
+                    }).ToList()
+                };
+
+                // 3. Calcular costo usando LogisticaService
+                var shippingCostResponse = await _logisticaService.CalcularCostoEnvioAsync(shippingRequest);
+
+                // 4. Calcular total productos
+                var totalProductos = cart.Items.Sum(item =>
+                    (item.Product?.Price ?? 0) * item.Quantity);
+
+                var totalConEnvio = totalProductos + shippingCostResponse.TotalCost;
+
+                _logger.LogInformation($"✅ Envío calculado: ${shippingCostResponse.TotalCost}");
+
+                // 5. Retornar respuesta completa
+                return Ok(new CalculateShippingResponse
+                {
+                    // Datos del envío
+                    ShippingCost = shippingCostResponse.TotalCost,
+                    Currency = shippingCostResponse.Currency,
+                    TransportType = request.TransportType,
+                    EstimatedDeliveryDays = GetEstimatedDays(request.TransportType),
+
+                    // Totales
+                    ProductsTotal = totalProductos,
+                    GrandTotal = totalConEnvio,
+
+                    // Resumen
+                    ItemsCount = cart.Items.Count,
+                    PostalCode = request.DeliveryAddress.PostalCode,
+
+                    // Fecha estimada (formato amigable)
+                    EstimatedDeliveryDate = DateTime.UtcNow
+                        .AddDays(GetEstimatedDays(request.TransportType).MaxDays)
+                        .ToString("dd 'de' MMMM 'de' yyyy",
+                            new System.Globalization.CultureInfo("es-AR"))
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error calculando envío");
+                return StatusCode(500, new
+                {
+                    message = "Error al calcular el envío",
+                    error = ex.Message,
+                    code = "SHIPPING_CALCULATION_ERROR"
+                });
+            }
+        }
+
         // EN CartController.cs - VERSIÓN CORREGIDA:
 
         [HttpPost("checkout")]
@@ -867,6 +961,55 @@ namespace ComprasAPI.Controllers
         {
             public int ProductId { get; set; }
             public int Quantity { get; set; }
+        }
+
+        // Modelos necesarios (agregar en CartController.cs o en archivo aparte)
+        public class CalculateShippingRequest
+        {
+            public ShippingAddress DeliveryAddress { get; set; }
+            public string TransportType { get; set; } // "truck", "boat", "plane"
+        }
+
+        public class ShippingAddress
+        {
+            public string Street { get; set; }
+            public string City { get; set; }
+            public string State { get; set; }
+            public string PostalCode { get; set; }
+            // Country no es necesario porque siempre es "AR"
+        }
+
+        public class CalculateShippingResponse
+        {
+            public decimal ShippingCost { get; set; }
+            public string Currency { get; set; }
+            public string TransportType { get; set; }
+            public DeliveryDaysRange EstimatedDeliveryDays { get; set; }
+            public string EstimatedDeliveryDate { get; set; }
+            public decimal ProductsTotal { get; set; }
+            public decimal GrandTotal { get; set; }
+            public int ItemsCount { get; set; }
+            public string PostalCode { get; set; }
+            public DateTime CalculationDate { get; set; } = DateTime.UtcNow;
+        }
+
+        public class DeliveryDaysRange
+        {
+            public int MinDays { get; set; }
+            public int MaxDays { get; set; }
+            public string Display => $"{MinDays}-{MaxDays} días hábiles";
+        }
+
+        // Método auxiliar para estimar días
+        private DeliveryDaysRange GetEstimatedDays(string transportType)
+        {
+            return transportType?.ToLower() switch
+            {
+                "truck" => new DeliveryDaysRange { MinDays = 3, MaxDays = 5 },
+                "boat" => new DeliveryDaysRange { MinDays = 7, MaxDays = 10 },
+                "plane" => new DeliveryDaysRange { MinDays = 1, MaxDays = 2 },
+                _ => new DeliveryDaysRange { MinDays = 3, MaxDays = 5 }
+            };
         }
 
         // 🔥 AGREGAR ESTO AL FINAL DE CartController.cs (antes de la última llave)

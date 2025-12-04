@@ -15,6 +15,11 @@
     <p class="mt-2">Cargando información del carrito...</p>
   </div>
 
+  <!-- Mensajes de éxito -->
+  <div *ngIf="successMessage && !loading" class="alert alert-success">
+    <pre class="mb-0" style="white-space: pre-wrap;">{{ successMessage }}</pre>
+  </div>
+
   <!-- Error Message -->
   <div *ngIf="errorMessage && !loading" class="alert alert-danger">
     {{ errorMessage }}
@@ -22,129 +27,325 @@
 
   <!-- Contenido principal -->
   <div *ngIf="!loading && cartItemsCount > 0" class="row">
-    <!-- Resumen del carrito -->
-    <div class="col-md-4 mb-4">
-      <div class="card">
+    <!-- Columna izquierda: Resumen y cálculo -->
+    <div class="col-lg-5 mb-4">
+      <!-- Resumen del carrito -->
+      <div class="card mb-4">
         <div class="card-header bg-primary text-white">
           <h5 class="mb-0">Resumen del Pedido</h5>
         </div>
         <div class="card-body">
-          <p><strong>Productos:</strong> {{ cartItemsCount }}</p>
-          <p><strong>Total:</strong> ${{ cartTotal }}</p>
-          <div class="alert alert-info">
-            <small>
-              <strong>⚠️ Importante:</strong> 
-              Después de confirmar el pedido, no podrás realizar cambios.
+          <div class="mb-3">
+            <p><strong>📦 Productos:</strong> {{ cartItemsCount }}</p>
+            <p><strong>💰 Subtotal:</strong> ${{ cartTotal | number:'1.2-2' }}</p>
+          </div>
+
+          <!-- Sección de envío calculado -->
+          <div *ngIf="shippingCalculated && shippingData" class="mt-4 p-3 bg-light rounded border border-success">
+            <h6 class="text-success mb-3">📦 Envío Calculado</h6>
+            
+            <div class="row mb-2">
+              <div class="col-6"><strong>Costo de envío:</strong></div>
+              <div class="col-6 text-end">${{ shippingData.shippingCost | number:'1.2-2' }}</div>
+            </div>
+            
+            <div class="row mb-2">
+              <div class="col-6"><strong>Método:</strong></div>
+              <div class="col-6 text-end">{{ translateTransportType(shippingData.transportType) }}</div>
+            </div>
+            
+            <div class="row mb-2">
+              <div class="col-6"><strong>Entrega estimada:</strong></div>
+              <div class="col-6 text-end">{{ getFormattedDeliveryDate() }}</div>
+            </div>
+            
+            <hr>
+            
+            <div class="row mb-1">
+              <div class="col-6"><strong>Subtotal:</strong></div>
+              <div class="col-6 text-end">${{ shippingData.productsTotal | number:'1.2-2' }}</div>
+            </div>
+            
+            <div class="row">
+              <div class="col-6"><strong class="h5">Total:</strong></div>
+              <div class="col-6 text-end">
+                <span class="h5 text-success">${{ shippingData.grandTotal | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            
+            <div class="mt-3">
+              <small class="text-success d-block">
+                <i class="bi bi-check-circle-fill me-1"></i>
+                Envío calculado correctamente
+              </small>
+              <small class="text-muted d-block mt-1">
+                Cálculo realizado el {{ shippingData.calculationDate | date:'dd/MM/yyyy HH:mm' }}
+              </small>
+            </div>
+          </div>
+
+          <!-- Advertencia si no se calculó el envío -->
+          <div *ngIf="!shippingCalculated" class="mt-4 p-3 bg-warning bg-opacity-10 rounded border border-warning">
+            <h6 class="text-warning mb-2">⚠️ Envío pendiente</h6>
+            <p class="small mb-2">
+              Debes calcular el envío antes de confirmar el pedido.
+            </p>
+            <p class="small text-muted mb-0">
+              Completa la dirección y selecciona un método de transporte, luego haz clic en "Calcular Envío".
+            </p>
+          </div>
+
+          <!-- Botón para calcular/recalcular envío -->
+          <div class="mt-4">
+            <button class="btn w-100" 
+                    [ngClass]="shippingCalculated ? 'btn-outline-success' : 'btn-success'" 
+                    (click)="calculateShipping()"
+                    [disabled]="calculatingShipping || !deliveryAddress.postalCode || !deliveryAddress.street">
+              <span *ngIf="!calculatingShipping">
+                <i *ngIf="shippingCalculated" class="bi bi-arrow-clockwise me-2"></i>
+                <i *ngIf="!shippingCalculated" class="bi bi-calculator me-2"></i>
+                {{ shippingCalculated ? 'Recalcular Envío' : '💰 Calcular Envío' }}
+              </span>
+              <span *ngIf="calculatingShipping">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Calculando...
+              </span>
+            </button>
+            
+            <small class="text-muted d-block mt-2">
+              <i class="bi bi-info-circle me-1"></i>
+              El cálculo incluye productos, dirección y método de transporte.
             </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Métodos de transporte -->
+      <div class="card">
+        <div class="card-header bg-secondary text-white">
+          <h6 class="mb-0">
+            <i class="bi bi-truck me-2"></i>
+            Métodos de Transporte
+          </h6>
+        </div>
+        <div class="card-body">
+          <div *ngFor="let method of (transportMethods.length > 0 ? transportMethods : defaultTransportOptions)" 
+               class="form-check mb-2">
+            <input class="form-check-input" 
+                   type="radio" 
+                   name="transportTypeRadio" 
+                   [id]="'transport-' + method.type"
+                   [(ngModel)]="transportType"
+                   [value]="method.type"
+                   (change)="onTransportChange()"
+                   [checked]="transportType === method.type">
+            <label class="form-check-label w-100" [for]="'transport-' + method.type">
+              <div class="d-flex justify-content-between align-items-center">
+                <span>{{ method.name }}</span>
+                <small class="text-muted">{{ method.estimatedDays }} días</small>
+              </div>
+              <!-- CORRECCIÓN: Verificar si existe description antes de mostrarlo -->
+              <small *ngIf="method.description && method.description.trim() !== ''" 
+                     class="text-muted d-block">
+                {{ method.description }}
+              </small>
+            </label>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Formulario de envío -->
-    <div class="col-md-8">
+    <!-- Columna derecha: Formulario de envío -->
+    <div class="col-lg-7">
       <div class="card">
         <div class="card-header bg-primary text-white">
-          <h5 class="mb-0">Información de Envío</h5>
+          <h5 class="mb-0">
+            <i class="bi bi-geo-alt me-2"></i>
+            Información de Envío
+          </h5>
         </div>
         <div class="card-body">
           <form (ngSubmit)="submitOrder()" #checkoutForm="ngForm">
             
             <!-- Dirección -->
             <div class="mb-3">
-              <label for="street" class="form-label">Calle y Número *</label>
+              <label for="street" class="form-label">
+                <i class="bi bi-signpost me-1"></i>
+                Calle y Número *
+              </label>
               <input type="text" 
                      class="form-control" 
                      id="street" 
                      name="street"
                      [(ngModel)]="deliveryAddress.street"
+                     (input)="onAddressChange()"
                      required
-                     placeholder="Ej: Avenida Corrientes 900">
+                     placeholder="Ej: Avenida Corrientes 900"
+                     [class.is-invalid]="errorMessage && !deliveryAddress.street.trim()">
+              <div class="invalid-feedback">
+                Por favor ingresa la calle y número.
+              </div>
             </div>
 
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="city" class="form-label">Ciudad *</label>
+                <label for="city" class="form-label">
+                  <i class="bi bi-building me-1"></i>
+                  Ciudad *
+                </label>
                 <input type="text" 
                        class="form-control" 
                        id="city" 
                        name="city"
                        [(ngModel)]="deliveryAddress.city"
+                       (input)="onAddressChange()"
                        required
-                       placeholder="Ej: Resistencia">
+                       placeholder="Ej: Resistencia"
+                       [class.is-invalid]="errorMessage && !deliveryAddress.city.trim()">
+                <div class="invalid-feedback">
+                  Por favor ingresa la ciudad.
+                </div>
               </div>
               <div class="col-md-6 mb-3">
-                <label for="state" class="form-label">Provincia *</label>
+                <label for="state" class="form-label">
+                  <i class="bi bi-geo me-1"></i>
+                  Provincia *
+                </label>
                 <input type="text" 
                        class="form-control" 
                        id="state" 
                        name="state"
                        [(ngModel)]="deliveryAddress.state"
+                       (input)="onAddressChange()"
                        required
-                       placeholder="Ej: Chaco">
+                       placeholder="Ej: Chaco"
+                       [class.is-invalid]="errorMessage && !deliveryAddress.state.trim()">
+                <div class="invalid-feedback">
+                  Por favor ingresa la provincia.
+                </div>
               </div>
             </div>
 
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="postalCode" class="form-label">Código Postal *</label>
+                <label for="postalCode" class="form-label">
+                  <i class="bi bi-postcard me-1"></i>
+                  Código Postal *
+                </label>
                 <input type="text" 
                        class="form-control" 
                        id="postalCode" 
                        name="postalCode"
                        [(ngModel)]="deliveryAddress.postalCode"
+                       (input)="onAddressChange()"
                        required
-                       placeholder="Ej: H3500">
+                       pattern="^[A-Za-z0-9\s]{4,8}$"
+                       placeholder="Ej: 3500"
+                       [class.is-invalid]="errorMessage && !deliveryAddress.postalCode.trim()">
+                <div class="invalid-feedback">
+                  Por favor ingresa un código postal válido (4-8 dígitos).
+                </div>
+                <small class="text-muted">
+                  El código postal afecta directamente el costo del envío.
+                </small>
               </div>
               <div class="col-md-6 mb-3">
-                <label for="country" class="form-label">País</label>
+                <label for="country" class="form-label">
+                  <i class="bi bi-globe me-1"></i>
+                  País
+                </label>
                 <input type="text" 
                        class="form-control" 
                        id="country" 
                        value="Argentina"
                        disabled
                        placeholder="Argentina">
-                <small class="text-muted">Actualmente solo enviamos a Argentina</small>
+                <small class="text-muted d-block">
+                  Actualmente solo enviamos a Argentina.
+                </small>
               </div>
             </div>
 
-            <!-- Método de envío -->
-            <div class="mb-4">
-              <label class="form-label">Método de Envío *</label>
-              <div *ngFor="let option of transportOptions" class="form-check">
-                <input class="form-check-input" 
-                       type="radio" 
-                       name="transportType" 
-                       [id]="'transport-' + option.value"
-                       [(ngModel)]="transportType"
-                       [value]="option.value"
-                       required>
-                <label class="form-check-label" [for]="'transport-' + option.value">
-                  {{ option.label }}
-                </label>
-              </div>
-            </div>
-
-            <!-- Botones -->
-            <div class="d-flex justify-content-between">
+            <!-- Botones de acción -->
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
               <button type="button" 
                       class="btn btn-secondary" 
                       (click)="goBack()"
-                      [disabled]="submitting">
+                      [disabled]="submitting || calculatingShipping">
+                <i class="bi bi-arrow-left me-1"></i>
                 Cancelar
               </button>
               
-              <button type="submit" 
-                      class="btn btn-primary btn-lg"
-                      [disabled]="submitting || !checkoutForm.form.valid">
-                <span *ngIf="!submitting">✅ Confirmar Pedido (${{ cartTotal }})</span>
-                <span *ngIf="submitting">
-                  <span class="spinner-border spinner-border-sm me-2"></span>
-                  Procesando...
-                </span>
-              </button>
+              <div class="text-end">
+                <!-- Estado del envío -->
+                <div *ngIf="!shippingCalculated" class="mb-2">
+                  <span class="badge bg-warning text-dark">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Envío no calculado
+                  </span>
+                </div>
+                
+                <!-- Total a pagar -->
+                <div *ngIf="shippingCalculated && shippingData" class="mb-2">
+                  <span class="h5 text-success">
+                    Total a pagar: ${{ shippingData.grandTotal | number:'1.2-2' }}
+                  </span>
+                </div>
+                
+                <!-- Botón de confirmación -->
+                <button type="submit" 
+                        class="btn btn-primary btn-lg"
+                        [disabled]="submitting || !checkoutForm.form.valid || !shippingCalculated || calculatingShipping">
+                  <span *ngIf="!submitting">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {{ shippingCalculated ? '✅ Confirmar Pedido' : 'Calcular Envío Primero' }}
+                  </span>
+                  <span *ngIf="submitting">
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    Procesando...
+                  </span>
+                </button>
+                
+                <!-- Mensaje guía -->
+                <div *ngIf="!shippingCalculated" class="mt-2">
+                  <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Completa todos los campos y calcula el envío antes de confirmar.
+                  </small>
+                </div>
+              </div>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- Información adicional -->
+      <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+          <h6 class="mb-0">
+            <i class="bi bi-info-circle me-2"></i>
+            Información importante
+          </h6>
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2">
+              <i class="bi bi-check-circle text-success me-2"></i>
+              El cálculo de envío es instantáneo y no genera costo hasta confirmar.
+            </li>
+            <li class="mb-2">
+              <i class="bi bi-check-circle text-success me-2"></i>
+              Puedes recalcular el envío cuantas veces necesites.
+            </li>
+            <li class="mb-2">
+              <i class="bi bi-check-circle text-success me-2"></i>
+              El costo se basa en tu dirección, productos y método seleccionado.
+            </li>
+            <li>
+              <i class="bi bi-check-circle text-success me-2"></i>
+              Después de confirmar, recibirás un email con los detalles de tu pedido.
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -152,10 +353,16 @@
 
   <!-- Carrito vacío -->
   <div *ngIf="!loading && cartItemsCount === 0" class="alert alert-warning">
-    <h4>Carrito vacío</h4>
-    <p>No tienes productos en tu carrito.</p>
-    <a routerLink="/paginaproductos" class="btn btn-primary">
-      Ir a Productos
-    </a>
+    <div class="d-flex align-items-center">
+      <i class="bi bi-cart-x fs-1 me-3"></i>
+      <div>
+        <h4 class="alert-heading">Carrito vacío</h4>
+        <p class="mb-3">No tienes productos en tu carrito para finalizar la compra.</p>
+        <a routerLink="/paginaproductos" class="btn btn-primary">
+          <i class="bi bi-arrow-right-circle me-1"></i>
+          Ir a Productos
+        </a>
+      </div>
+    </div>
   </div>
 </div>
