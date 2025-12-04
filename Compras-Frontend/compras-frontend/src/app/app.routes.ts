@@ -8,6 +8,7 @@ import { LoginComponent } from './components/login/login';
 import { Paginaproductos } from './components/paginaproductos/paginaproductos';
 import { CarritoComponent } from './components/carrito/carrito';
 import { CheckoutComponent } from './components/checkout/checkout';
+import { PurchaseHistoryComponent } from './components/purchase-history/purchase-history.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' }, // 👈 redirige al login
@@ -19,5 +20,6 @@ export const routes: Routes = [
   { path: 'paginaproductos', component: Paginaproductos},
   { path: 'carrito', component: CarritoComponent},
   { path: 'checkout', component: CheckoutComponent },
+  { path: 'mis-compras', component: PurchaseHistoryComponent },
   { path: '**', redirectTo: 'login' } // 👈 si no existe la ruta, redirige al login
 ];

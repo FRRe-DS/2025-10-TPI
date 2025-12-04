@@ -316,7 +316,7 @@ export class CheckoutComponent implements OnInit {
         // Redirigir después de mostrar el mensaje
         setTimeout(() => {
           this.router.navigate(['/carrito']);
-        }, 3000);
+        }, 10000);
         
         this.submitting = false;
       },

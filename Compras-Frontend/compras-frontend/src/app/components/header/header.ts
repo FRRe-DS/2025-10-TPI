@@ -186,7 +186,7 @@ import { filter } from 'rxjs/operators';
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#historial">
+              <a class="nav-link" routerLink="/mis-compras" routerLinkActive="active">
                 📋 Historial
               </a>
             </li>

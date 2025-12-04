@@ -36,6 +36,7 @@ builder.Services.AddHttpClient<ILogisticaService, LogisticaService>((provider, c
 // ✅ 3. REGISTRAR SERVICIOS
 builder.Services.AddScoped<IStockService, StockService>();
 builder.Services.AddScoped<ILogisticaService, LogisticaService>();
+builder.Services.AddScoped<PurchaseHistoryController>();
 
 // AÑADIR JWT CON KEYCLOACK
 builder.Services
